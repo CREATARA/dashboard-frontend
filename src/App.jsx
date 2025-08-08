@@ -15,6 +15,7 @@ const PrivateRoute = ({ children }) => {
       <SignedIn>{children}</SignedIn>
       <SignedOut>
         {/* With the provider setup, Clerk will handle this redirect automatically */}
+        <SignIn routing="path" path="/sign-in" />
       </SignedOut>
     </>
   );
