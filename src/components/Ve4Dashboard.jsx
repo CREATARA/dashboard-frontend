@@ -73,7 +73,7 @@ const Ve4Dashboard = () => {
   const clientRef = useRef(null);
 
   // --- MQTT Connection Logic ---
-  const MQTT_URL = import.meta.env.VITE_MQTT_URL_Ve4;
+  const MQTT_URL = import.meta.env.VITE_MQTT_URL_VE4;
   const MQTT_OPTIONS = {
     username: import.meta.env.VITE_MQTT_USERNAME,
     password: import.meta.env.VITE_MQTT_PASSWORD,

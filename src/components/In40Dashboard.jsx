@@ -77,16 +77,16 @@ const [data, setData] = useState(DUMMY_DATA);
   const clientRef = useRef(null);
 
   // --- MQTT Connection Logic ---
-  const MQTT_URL = import.meta.env.VITE_MQTT_URL_In40;
+  const MQTT_URL = import.meta.env.VITE_MQTT_URL_IN40;
   const MQTT_OPTIONS = {
-    username: import.meta.env.VITE_MQTT_USERNAME_In40,
-    password: import.meta.env.VITE_MQTT_PASSWORD_In40,
+    username: import.meta.env.VITE_MQTT_USERNAME_IN40,
+    password: import.meta.env.VITE_MQTT_PASSWORD_IN40,
     keepalive: 60,
     reconnectPeriod: 1000,
-    clientId: import.meta.env.VITE_MQTT_CLIENT_ID_In40,
+    clientId: import.meta.env.VITE_MQTT_CLIENT_ID_IN40,
     clean: true,
   };
-  const topic = import.meta.env.VITE_MQTT_TOPIC_In40 || "can/data";
+  const topic = import.meta.env.VITE_MQTT_TOPIC_IN40 || "can/data";
 
   useEffect(() => {
     if (clientRef.current) return;
