@@ -13,7 +13,7 @@ const DUMMY_DATA = {
   brake: false,
   kill: false,
   pbutton: false,
-  speed: 0,
+  rpm: 0,
   vmode: 0,
   odometer: 0,
   charging: false,
@@ -60,6 +60,10 @@ const V_MODE_MAP = {
   4: "Boost",
   5: "Reverse",
 };
+
+// --- Vehicle Specific Constants for Speed Calculation ---
+
+
 
 
 const MAX_SPEED = 120; // Define a maximum speed for the gauge percentage
@@ -176,23 +180,33 @@ const [data, setData] = useState(DUMMY_DATA);
     }));
   };
 
+// const WHEEL_DIAMETER_INCHES = 14;
 
+  // const GEAR_RATIO = 1.0; 
+  // ** NEW: Function to calculate speed (km/h) from motor RPM **
+  const calculateSpeedFromRpm = (rpm) => {
+    if (typeof rpm !== 'number' || rpm <= 0) return 0;
 
+   
+    const kmPerHour = rpm * 0.05734; // 0.1525 meters is the wheel radius (12 inches diameter)
+    
+    return kmPerHour;
+  };
 
 
    // Generates a smooth linear gradient for the speed gauge background
  
-   const getSpeedColor = (speed) => {
-      if (speed > 80) return '#AD2408';
-      if (speed > 60) return '#EB3915';
-      if (speed > 40) return '#E0C600';
-      if (speed > 20) return '#0FE000';
-      if (speed >= 10) return '#55B000';
+   const getSpeedColor = (calculatedSpeed) => {
+      if (calculatedSpeed > 80) return '#AD2408';
+      if (calculatedSpeed > 60) return '#EB3915';
+      if (calculatedSpeed > 40) return '#E0C600';
+      if (calculatedSpeed > 20) return '#0FE000';
+      if (calculatedSpeed >= 10) return '#55B000';
       return 'transparent'; // Default for speed < 10
   };
 
-  const getSpeedPercentage = (speed) => {
-      const clampedSpeed = Math.min(speed, MAX_SPEED);
+  const getSpeedPercentage = (calculatedSpeed) => {
+      const clampedSpeed = Math.min(calculatedSpeed, MAX_SPEED);
       return (clampedSpeed / MAX_SPEED) * 100;
   };
 
@@ -210,6 +224,8 @@ const [data, setData] = useState(DUMMY_DATA);
    const greenFilter = 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)'; // #0FE000
   const redFilter = 'invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)'; // #EB3915
 
+   // Calculate speed from RPM for UI display
+  const calculatedSpeed = calculateSpeedFromRpm(data.rpm);
 
   return (
     <>
@@ -284,15 +300,15 @@ const [data, setData] = useState(DUMMY_DATA);
           <div className="w-full h-[165px] rounded-3xl flex items-center  pl-3 gap-3 bg-primary">
              <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
                <span className="text-xl">Speed</span>
-               <span className="text-3xl">{data.speed?.toFixed(0) ?? '0'} km/hr</span>
+               <span className="text-3xl">{calculatedSpeed.toFixed(0)} km/hr</span>
              </div>
              <div className="w-[150px]   gap-2 justify-start  h-[140px]  flex">
                 <div className="w-[52px] h-full border-2 border-gray-400  flex items-end bg-white overflow-hidden">
                     <div
                         className="w-full"
                         style={{
-                            height: `${getSpeedPercentage(data.speed)}%`,
-                            backgroundColor: getSpeedColor(data.speed),
+                            height: `${getSpeedPercentage(calculatedSpeed)}%`,
+                            backgroundColor: getSpeedColor(calculatedSpeed),
                             transition: 'height 0.5s ease, background-color 0.5s ease'
                         }}
                     ></div>
