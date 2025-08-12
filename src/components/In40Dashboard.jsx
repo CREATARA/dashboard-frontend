@@ -5,7 +5,6 @@ import mqtt from "mqtt";
 
 const DUMMY_DATA = {
   vehicle_on: false,
-  motor_status: false,
   steer_lock: false,
   bat_lock: false,
   sstand: false,
@@ -228,6 +227,9 @@ const [data, setData] = useState(DUMMY_DATA);
   const calculatedSpeed = calculateSpeedFromRpm(data.rpm);
 
   return (
+
+
+
     <>
       
       {/* --- Main Dashboard --- */}
@@ -244,11 +246,11 @@ const [data, setData] = useState(DUMMY_DATA);
             </div>
             <div className="gap-4 flex rounded-3xl flex-col justify-center items-center w-[140px] h-[140px] bg-secondry">
               <img src="/Gear.png" alt="Motor Status"  height={35} width={35} 
-              style={{ filter: data.motor_status ? greenFilter : redFilter }}
+              style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
               />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Motor</span>
-                <span className="text-xl">{data.motor_status ? "ON" : "OFF"}</span>
+                <span className="text-xl">{data.vehicle_on ? "ON" : "OFF"}</span>
               </div>
             </div>
             <div className="w-[140px] rounded-3xl h-[140px] flex gap-4 flex-col justify-center items-center bg-secondry">

@@ -5,7 +5,6 @@ import mqtt from "mqtt";
 
 const DUMMY_DATA = {
   vehicle_on: false,
-  motor_status: false,
   steer_lock: false,
   bat_lock: false,
   sstand: false,
@@ -240,6 +239,7 @@ const Ve4Dashboard = () => {
     "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)"; // #EB3915
 
   return (
+    
     <>
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
@@ -265,12 +265,12 @@ const Ve4Dashboard = () => {
                 alt="Motor Status"
                 height={35}
                 width={35}
-                style={{ filter: data.motor_status ? greenFilter : redFilter }}
+                style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
               />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Motor</span>
                 <span className="text-xl">
-                  {data.motor_status ? "ON" : "OFF"}
+                 {data.vehicle_on ? "ON" : "OFF"}
                 </span>
               </div>
             </div>
