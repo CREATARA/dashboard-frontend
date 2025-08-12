@@ -188,7 +188,7 @@ const [data, setData] = useState(DUMMY_DATA);
     if (typeof rpm !== 'number' || rpm <= 0) return 0;
 
    
-    const kmPerHour = rpm * 0.05734; // 0.1525 meters is the wheel radius (12 inches diameter)
+    const kmPerHour = rpm  / 11;  // 0.1525 meters is the wheel radius (12 inches diameter)
     
     return kmPerHour;
   };
