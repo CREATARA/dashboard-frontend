@@ -83,28 +83,6 @@ const Ve4Dashboard = () => {
   };
   const topic = import.meta.env.VITE_MQTT_TOPIC || "can/data";
 
-  // ** NEW: Use a ref to buffer incoming data without causing re-renders **
-
-  // const dataBuffer = useRef({});
-
-  // ** UPDATED FUNCTION TO SEND DATA TO YOUR BACKEND USING AXIOS **
-
-
-
-  // const saveDataToDatabase = async (payload) => {
-  //   // This function remains the same, but will now be called only once.
-  //   try {
-  //     await axios.post("http://localhost:3000/api/data/ve4", payload);
-  //     console.log("Successfully sent buffered data to the backend.");
-  //   } catch (error) {
-  //     if (error.response) {
-  //       console.error("Failed to save data to DB:", error.response.data);
-  //     } else {
-  //       console.error("Error sending data to backend:", error.message);
-  //     }
-  //   }
-  // };
-
   useEffect(() => {
     if (clientRef.current) return;
 
@@ -118,18 +96,7 @@ const Ve4Dashboard = () => {
       setIsConnected(true);
       client.subscribe(topic);
 
-      // After 60 seconds, send the collected data from the buffer.
-
-      // const timer = setTimeout(() => {
-      //   console.log(
-      //     "1 minute has passed. Sending collected data to the database."
-      //   );
-      //   // Send the final, combined data object from the buffer.
-      //   saveDataToDatabase(dataBuffer.current);
-      // }, 60000);                           // 60,000 milliseconds = 1 minute
-
-      // // Cleanup: If the component unmounts, clear the timer.
-      // return () => clearTimeout(timer);
+      
     });
 
     client.on("message", (topic, message) => {
