@@ -334,7 +334,7 @@ const Ve4Dashboard = () => {
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Kill Switch</span>
               <span className="text-3xl">
-                {data.kill ? "Active" : "Inactive/Off"}
+                {data.kill ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
