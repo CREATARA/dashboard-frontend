@@ -3,7 +3,6 @@ import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import HomePage from './components/HomePage';
 import Ve4Dashboard from './components/Ve4Dashboard';
 import In40Dashboard from './components/In40Dashboard';
-import { IoIosLogOut } from "react-icons/io";
 import './App.css';
 import { useEffect, useRef, useState } from 'react';
 

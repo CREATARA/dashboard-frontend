@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-
+import axios from 'axios';
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -70,6 +70,7 @@ const Ve4Dashboard = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessageTime, setLastMessageTime] = useState(null); // <-- New state for timeout
   const clientRef = useRef(null);
+    const dataBuffer = useRef({}); // Buffer to hold incoming data
 
   // --- MQTT Connection Logic ---
   const MQTT_URL = import.meta.env.VITE_MQTT_URL_VE4;
@@ -83,6 +84,18 @@ const Ve4Dashboard = () => {
   };
   const topic = import.meta.env.VITE_MQTT_TOPIC || "can/data";
 
+
+
+    //  database code 
+    const saveDataToDatabase = async (payload) => {
+        try {
+            await axios.post('http://localhost:3001/api/data/ve4', payload);
+            console.log("Successfully sent buffered Ve4 data to the backend.");
+        } catch (error) {
+            console.error('Error sending Ve4 data to backend:', error.message);
+        }
+    };
+
   useEffect(() => {
     if (clientRef.current) return;
 
@@ -95,14 +108,18 @@ const Ve4Dashboard = () => {
       );
       setIsConnected(true);
       client.subscribe(topic);
-
-      
+         const timer = setTimeout(() => {
+                console.log("1 minute has passed. Sending collected Ve4 data.");
+                saveDataToDatabase(dataBuffer.current);
+            }, 60000);
+         client.timer = timer;
     });
 
     client.on("message", (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
         setData((prevData) => ({ ...prevData, ...payload }));
+         dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
         setLastMessageTime(Date.now());
         // dataBuffer.current = { ...dataBuffer.current, ...payload }; // <-- Update timestamp on every message
       } catch (err) {
@@ -115,6 +132,7 @@ const Ve4Dashboard = () => {
       setIsConnected(false);
       setLastMessageTime(null); // <-- Reset timer on disconnect
       setData(DUMMY_DATA);
+      if (client.timer) clearTimeout(client.timer);
     });
 
     client.on("error", (err) => {
@@ -123,9 +141,16 @@ const Ve4Dashboard = () => {
       client.end();
     });
 
+    // ** CLEANUP FUNCTION **
     return () => {
       if (clientRef.current) {
+        // First, clean up things that depend on the client object
+        if (clientRef.current.timer) {
+          clearTimeout(clientRef.current.timer);
+        }
+        // Then, end the connection
         clientRef.current.end(true);
+        // Finally, nullify the reference
         clientRef.current = null;
       }
     };

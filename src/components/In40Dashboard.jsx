@@ -1,6 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-
+import axios from "axios";
+import In40Analytics from "./In40Analytics";
+import { BarChart3, Battery } from "lucide-react";
+import In40BatteryHealth from "./In40BatteryHealth";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -21,8 +24,8 @@ const DUMMY_DATA = {
   mtemp: 0,
   DIAGNOSTICS: [],
   timestamp: "",
-  amp:0,
-  volt:0,
+  amp: 0,
+  volt: 0,
 };
 
 const DIAGNOSTIC_ERROR_MAP = {
@@ -62,23 +65,21 @@ const V_MODE_MAP = {
 
 // --- Vehicle Specific Constants for Speed Calculation ---
 
-
-
-
 const MAX_SPEED = 120; // Define a maximum speed for the gauge percentage
-
-
 
 // --- Component ---
 
 const In40Dashboard = () => {
-
-const [data, setData] = useState(DUMMY_DATA);
+  const [data, setData] = useState(DUMMY_DATA);
   const [displayTimestamp, setDisplayTimestamp] = useState(new Date());
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessageTime, setLastMessageTime] = useState(null); // <-- New state for timeout
+  const [isChartOpen, setIsChartOpen] = useState(false);
   const clientRef = useRef(null);
+  const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
 
+  const dataBuffer = useRef({}); // Buffer to hold incoming data
+  let saveInterval = useRef(null); // Use ref to hold interval ID
   // --- MQTT Connection Logic ---
   const MQTT_URL = import.meta.env.VITE_MQTT_URL_IN40;
   const MQTT_OPTIONS = {
@@ -91,6 +92,17 @@ const [data, setData] = useState(DUMMY_DATA);
   };
   const topic = import.meta.env.VITE_MQTT_TOPIC_IN40 || "can/data";
 
+  //  database code
+
+  const saveDataToDatabase = async (payload) => {
+    try {
+      await axios.post("http://localhost:3001/api/data/in40", payload);
+      console.log("Successfully sent buffered IN40 data to the backend.");
+    } catch (error) {
+      console.error("Error sending IN40 data to backend:", error.message);
+    }
+  };
+
   useEffect(() => {
     if (clientRef.current) return;
 
@@ -101,12 +113,18 @@ const [data, setData] = useState(DUMMY_DATA);
       console.log("✅ MQTT Connected");
       setIsConnected(true);
       client.subscribe(topic);
+      saveInterval.current = setInterval(() => {
+        console.log("1 minute has passed. Sending collected IN40 data.");
+        saveDataToDatabase(dataBuffer.current);
+      }, 60000);
     });
 
     client.on("message", (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
-        setData(prevData => ({ ...prevData, ...payload }));
+        console.log("in40 data", payload);
+        setData((prevData) => ({ ...prevData, ...payload }));
+        dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
         setLastMessageTime(Date.now()); // <-- Update timestamp on every message
       } catch (err) {
         console.error("MQTT Parse error:", err);
@@ -115,20 +133,28 @@ const [data, setData] = useState(DUMMY_DATA);
 
     client.on("close", () => {
       console.log("❌ MQTT Disconnected");
+      if (client.timer) clearTimeout(client.timer);
+      clearInterval(saveInterval.current); // clear the timer
       setIsConnected(false);
       setLastMessageTime(null); // <-- Reset timer on disconnect
       setData(DUMMY_DATA);
     });
-    
-    client.on("error", (err) => {
-        console.error("MQTT Connection Error:", err);
-        setLastMessageTime(null);
-        client.end();
-    });
 
+    client.on("error", (err) => {
+      console.error("MQTT Connection Error:", err);
+      setLastMessageTime(null);
+      client.end();
+    });
+    // ** CLEANUP FUNCTION **
     return () => {
       if (clientRef.current) {
+        // First, clean up things that depend on the client object
+        if (clientRef.current.timer) {
+          clearTimeout(clientRef.current.timer);
+        }
+        // Then, end the connection
         clientRef.current.end(true);
+        // Finally, nullify the reference
         clientRef.current = null;
       }
     };
@@ -138,25 +164,23 @@ const [data, setData] = useState(DUMMY_DATA);
   useEffect(() => {
     // Don't run the timer if not connected or if we've never received a message
     if (!isConnected || !lastMessageTime) {
-        return;
+      return;
     }
 
     const timeoutInterval = setInterval(() => {
-        const timeSinceLastMessage = (Date.now() - lastMessageTime) / 1000; // in seconds
-        
-        // Check if 70 seconds (1 min 10 secs) have passed
-        if (timeSinceLastMessage > 70) {
-            console.warn("MQTT data stream timed out. Reverting to dummy data.");
-            setData(DUMMY_DATA);
-            setLastMessageTime(null); // Stop the timer from firing again until a new message arrives
-        }
+      const timeSinceLastMessage = (Date.now() - lastMessageTime) / 1000; // in seconds
+
+      // Check if 70 seconds (1 min 10 secs) have passed
+      if (timeSinceLastMessage > 70) {
+        console.warn("MQTT data stream timed out. Reverting to dummy data.");
+        setData(DUMMY_DATA);
+        setLastMessageTime(null); // Stop the timer from firing again until a new message arrives
+      }
     }, 5000); // Check every 5 seconds
 
     // Cleanup function to clear the interval
     return () => clearInterval(timeoutInterval);
-
   }, [isConnected, lastMessageTime]);
-
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -168,7 +192,7 @@ const [data, setData] = useState(DUMMY_DATA);
   // --- Helper Functions ---
   const formatStatus = (val) => (val ? "Active" : "Inactive");
   const getVModeName = (mode) => V_MODE_MAP[mode] || "N/A";
-  
+
   const getDiagnosticMessages = (codes) => {
     if (!codes || codes.length === 0) {
       return [{ code: "OK", message: "No Errors" }];
@@ -179,59 +203,64 @@ const [data, setData] = useState(DUMMY_DATA);
     }));
   };
 
-// const WHEEL_DIAMETER_INCHES = 14;
+  // const WHEEL_DIAMETER_INCHES = 14;
 
-  // const GEAR_RATIO = 1.0; 
+  // const GEAR_RATIO = 1.0;
   // ** NEW: Function to calculate speed (km/h) from motor RPM **
   const calculateSpeedFromRpm = (rpm) => {
-    if (typeof rpm !== 'number' || rpm <= 0) return 0;
+    if (typeof rpm !== "number" || rpm <= 0) return 0;
 
-   
-    const kmPerHour = rpm  / 11;  // 0.1525 meters is the wheel radius (12 inches diameter)
-    
+    const kmPerHour = rpm / 11; // 0.1525 meters is the wheel radius (12 inches diameter)
+
     return kmPerHour;
   };
 
+  // Generates a smooth linear gradient for the speed gauge background
 
-   // Generates a smooth linear gradient for the speed gauge background
- 
-   const getSpeedColor = (calculatedSpeed) => {
-      if (calculatedSpeed > 80) return '#AD2408';
-      if (calculatedSpeed > 60) return '#EB3915';
-      if (calculatedSpeed > 40) return '#E0C600';
-      if (calculatedSpeed > 20) return '#0FE000';
-      if (calculatedSpeed >= 10) return '#55B000';
-      return 'transparent'; // Default for speed < 10
+  const getSpeedColor = (calculatedSpeed) => {
+    if (calculatedSpeed > 80) return "#AD2408";
+    if (calculatedSpeed > 60) return "#EB3915";
+    if (calculatedSpeed > 40) return "#E0C600";
+    if (calculatedSpeed > 20) return "#0FE000";
+    if (calculatedSpeed >= 10) return "#55B000";
+    return "transparent"; // Default for speed < 10
   };
 
   const getSpeedPercentage = (calculatedSpeed) => {
-      const clampedSpeed = Math.min(calculatedSpeed, MAX_SPEED);
-      return (clampedSpeed / MAX_SPEED) * 100;
+    const clampedSpeed = Math.min(calculatedSpeed, MAX_SPEED);
+    return (clampedSpeed / MAX_SPEED) * 100;
   };
 
-   // **New function to calculate range based on SOC**
+  // **New function to calculate range based on SOC**
   const calculateRange = (soc) => {
     const MAX_RANGE_AT_100_SOC = 97; // in km
-    if (typeof soc !== 'number' || soc < 0) return 0;
+    if (typeof soc !== "number" || soc < 0) return 0;
     const range = (soc / 100) * MAX_RANGE_AT_100_SOC;
     return range;
   };
 
-
   const diagnosticMessages = getDiagnosticMessages(data.DIAGNOSTICS);
-  
-   const greenFilter = 'invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)'; // #0FE000
-  const redFilter = 'invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)'; // #EB3915
 
-   // Calculate speed from RPM for UI display
+  const greenFilter =
+    "invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)"; // #0FE000
+  const redFilter =
+    "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)"; // #EB3915
+
+  // Calculate speed from RPM for UI display
   const calculatedSpeed = calculateSpeedFromRpm(data.rpm);
 
   return (
-
-
-
     <>
-      
+    {/* this is anyalytics componnet  */}
+      <In40Analytics
+        isOpen={isChartOpen}
+        onClose={() => setIsChartOpen(false)}
+      />
+  {/* this is the  battery analytics components  */}
+      <In40BatteryHealth
+        isOpen={isBatteryChartOpen}
+        onClose={() => setIsBatteryChartOpen(false)}
+      />
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
         {/* --- Left Side --- */}
@@ -239,47 +268,86 @@ const [data, setData] = useState(DUMMY_DATA);
           {/* Row 1 */}
           <div className="w-full px-3  h-[165px] rounded-3xl flex items-center gap-3 bg-primary">
             <div className="w-[140px] h-[140px] rounded-3xl gap-4 p-3 flex flex-col justify-center items-center bg-secondry">
-              <img src="/vehicle.png" alt="Vehicle Status"height={35} width={35}
+              <img
+                src="/vehicle.png"
+                alt="Vehicle Status"
+                height={35}
+                width={35}
                 style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
               />
-              <span className="text-xl">Vehicle {data.vehicle_on ? "ON" : "OFF"}</span>
+              <span className="text-xl">
+                Vehicle {data.vehicle_on ? "ON" : "OFF"}
+              </span>
             </div>
             <div className="gap-4 flex rounded-3xl flex-col justify-center items-center w-[140px] h-[140px] bg-secondry">
-              <img src="/Gear.png" alt="Motor Status"  height={35} width={35} 
-              style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
+              <img
+                src="/Gear.png"
+                alt="Motor Status"
+                height={35}
+                width={35}
+                style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
               />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Motor</span>
-                <span className="text-xl">{data.vehicle_on ? "ON" : "OFF"}</span>
+                <span className="text-xl">
+                  {data.vehicle_on ? "ON" : "OFF"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] rounded-3xl h-[140px] flex gap-4 flex-col justify-center items-center bg-secondry">
-              <img src={data.steer_lock ? "/lockon.png" : "/lockoff.png"} alt="Handle Lock" height={35} width={35} />
+              <img
+                src={data.steer_lock ? "/lockon.png" : "/lockoff.png"}
+                alt="Handle Lock"
+                height={35}
+                width={35}
+              />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Handle Lock</span>
-                <span className="text-xl">{formatStatus(data.steer_lock)}</span>
+                <span className="text-xl">
+                  {data.steer_lock ? "Active" : "Inactive"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] rounded-3xl h-[140px] flex gap-4 flex-col justify-center items-center bg-secondry">
-              <img  src={data.bat_lock ? "/batlockon.png" : "/batlockoff.png"} 
-                alt="Battery Lock"  height={35} width={35} />
+              <img
+                src={data.bat_lock ? "/batlockon.png" : "/batlockoff.png"}
+                alt="Battery Lock"
+                height={35}
+                width={35}
+              />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Battery Lock</span>
-                <span className="text-xl">{formatStatus(data.bat_lock)}</span>
+                <span className="text-xl">
+                  {data.bat_lock ? "Active" : "Inactive"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] h-[140px] rounded-3xl bg-secondry flex gap-4 flex-col justify-center items-center">
-              <img  src={data.sstand ? "/sstandon.png" : "/sstandoff.png"}  alt="Side Stand" height={35} width={35} />
+              <img
+                src={data.sstand ? "/sstandon.png" : "/sstandoff.png"}
+                alt="Side Stand"
+                height={35}
+                width={35}
+              />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Side Stand</span>
-                <span className="text-xl">{formatStatus(data.sstand)}</span>
+                <span className="text-xl">
+                  {data.sstand ? "Active" : "Inactive"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] h-[140px] rounded-3xl bg-secondry flex gap-4 flex-col justify-center items-center">
-              <img   src={data.bat_dock ? "/plugson.png" : "/plugsoff.png"}  alt="Battery Dock"  height={35} width={35} />
-              <div className="flex flex-col items-center"> 
+              <img
+                src={data.bat_dock ? "/plugson.png" : "/plugsoff.png"}
+                alt="Battery Dock"
+                height={35}
+                width={35}
+              />
+              <div className="flex flex-col items-center">
                 <span className="text-xl">Battery</span>
-                <span className="text-xl">{data.bat_dock ? "Docked" : "Undocked"}</span>
+                <span className="text-xl">
+                  {data.bat_dock ? "Docked" : "Undocked"}
+                </span>
               </div>
             </div>
           </div>
@@ -287,122 +355,172 @@ const [data, setData] = useState(DUMMY_DATA);
           <div className="w-full h-[165px] flex items-center  pl-3 gap-3 rounded-3xl bg-primary">
             <div className="w-[220px] h-[135px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Brakes</span>
-              <span className="text-3xl">{formatStatus(data.brake)}</span>
+              <span className="text-3xl">
+                {data.brake ? "Active" : "Inactive"}
+              </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Kill Switch</span>
-              <span className="text-3xl">{data.kill ? "Active" : "Inactive"}</span>
+              <span className="text-3xl">
+                {data.kill ? "Active" : "Inactive"}
+              </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Push Button</span>
-              <span className="text-3xl">{formatStatus(data.pbutton)}</span>
+              <span className="text-3xl">
+                {data.pbutton ? "Active" : "Inactive"}
+              </span>
             </div>
           </div>
           {/* Row 3 */}
           <div className="w-full h-[165px] rounded-3xl flex items-center  pl-3 gap-3 bg-primary">
-             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Speed</span>
-               <span className="text-3xl">{calculatedSpeed.toFixed(0)} km/hr</span>
-             </div>
-             <div className="w-[150px]   gap-2 justify-start  h-[140px]  flex">
-                <div className="w-[52px] h-full border-2 border-gray-400  flex items-end bg-white overflow-hidden">
-                    <div
-                        className="w-full"
-                        style={{
-                            height: `${getSpeedPercentage(calculatedSpeed)}%`,
-                            backgroundColor: getSpeedColor(calculatedSpeed),
-                            transition: 'height 0.5s ease, background-color 0.5s ease'
-                        }}
-                    ></div>
-                </div>
-                <div className=" flex justify-end items-end">
-                    <span className="text-xl">Readings</span>
-                </div>
-             </div>
-             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Mode</span>
-                <span className="text-3xl">{getVModeName(data.vmode)}</span>
-             </div>
-             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Odometer</span>
-               <span className="text-3xl">{data.odometer?.toFixed(2) ?? '0.00'} km</span>
-             </div>
+            <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Speed</span>
+              <span className="text-3xl">
+                {calculatedSpeed.toFixed(0)} km/hr
+              </span>
+            </div>
+            <div className="w-[150px]   gap-2 justify-start  h-[140px]  flex">
+              <div className="w-[52px] h-full border-2 border-gray-400  flex items-end bg-white overflow-hidden">
+                <div
+                  className="w-full"
+                  style={{
+                    height: `${getSpeedPercentage(calculatedSpeed)}%`,
+                    backgroundColor: getSpeedColor(calculatedSpeed),
+                    transition: "height 0.5s ease, background-color 0.5s ease",
+                  }}
+                ></div>
+              </div>
+              <div className=" flex justify-end items-end">
+                <span className="text-xl">Readings</span>
+              </div>
+            </div>
+            <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Mode</span>
+              <span className="text-3xl">{getVModeName(data.vmode)}</span>
+            </div>
+            <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Odometer</span>
+              <span className="text-3xl">
+                {data.odometer?.toFixed(2) ?? "0.00"} km
+              </span>
+            </div>
           </div>
           {/* Row 4 */}
           <div className="w-full flex h-[165px] pl-3  rounded-3xl bg-primary items-center gap-3">
             <div className="w-[170px] h-[140px] rounded-3xl bg-secondry gap-2 flex flex-col justify-center p-4">
               <span className="text-xl">Charging</span>
-              <span className="text-3xl">{data.charging ? "Active" : "Inactive"}</span>
+              <span className="text-3xl">
+                {data.charging ? "Active" : "Inactive"}
+              </span>
             </div>
             {/* this is the range and for now it is static  */}
-           <div className="w-[170px] h-[140px] rounded-3xl bg-secondry flex flex-col justify-center p-4">
+            <div className="w-[170px] h-[140px] rounded-3xl bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Range</span>
-              <span className="text-3xl">{calculateRange(data.soc).toFixed(1)} km</span>
+              <span className="text-3xl">
+                {calculateRange(data.soc).toFixed(1)} km
+              </span>
             </div>
-             <div className="flex items-center justify-center gap-2 w-[160px] h-[140px]">
-                <div className="w-[40%] h-full bg-white rounded-2xl flex items-end overflow-hidden border-2 border-gray-400">
-                    <div className="w-full" style={{ height: `${data.soc}%`, backgroundColor: '#99C842' }}></div>
-                </div>
-                <div className="w-[60%]  h-full justify-end flex-col flex items-baseline">
-                    <span className="text-xl">SOC</span>
-                    <span className="text-3xl">{data.soc}%</span>
-                </div>
-             </div>
-             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Battery Temp</span>
-               <span className="text-3xl">{data.btemp}°C</span>
-             </div>
-             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Motor Temp</span>
-               <span className="text-3xl">{data.mtemp}°C</span>
-             </div>
+            <div className="flex items-center justify-center gap-2 w-[160px] h-[140px]">
+              <div className="w-[40%] h-full bg-white rounded-2xl flex items-end overflow-hidden border-2 border-gray-400">
+                <div
+                  className="w-full"
+                  style={{ height: `${data.soc}%`, backgroundColor: "#99C842" }}
+                ></div>
+              </div>
+              <div className="w-[60%]  h-full justify-end flex-col flex items-baseline">
+                <span className="text-xl">SOC</span>
+                <span className="text-3xl">{data.soc}%</span>
+              </div>
+            </div>
+            <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Battery Temp</span>
+              <span className="text-3xl">{data.btemp}°C</span>
+            </div>
+            <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Motor Temp</span>
+              <span className="text-3xl">{data.mtemp}°C</span>
+            </div>
           </div>
         </div>
 
         {/* --- Right Side (Diagnostics) --- */}
         <div className="w-2/4 min-h-screen gap-3 pr-2 flex flex-col items-center justify-center">
-            <div className="w-full h-auto min-h-[165px] flex flex-col p-3 bg-primary rounded-3xl">
-                <div className="w-full flex justify-between items-center mb-2">
-                    <span className="text-xl font-bold">Diagnostics</span>
-                    <span className="text-lg">{displayTimestamp.toLocaleTimeString()}</span>
+          <div className="w-full h-auto min-h-[165px] flex flex-col p-3 bg-primary rounded-3xl">
+            <div className="w-full flex justify-between items-center mb-2">
+              <span className="text-xl font-bold">Diagnostics</span>
+              <span className="text-lg">
+                {displayTimestamp.toLocaleTimeString()}
+              </span>
+            </div>
+            <div
+              className="w-full flex flex-col gap-2 overflow-y-auto"
+              style={{ maxHeight: "120px" }}
+            >
+              {diagnosticMessages.map((diag, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <div className="flex gap-3 items-center">
+                    {diag.code !== "OK" && (
+                      <img
+                        src="/Warning.png"
+                        alt="warning-logo"
+                        className="w-6 h-6"
+                      />
+                    )}
+                    <span className="text-md">{diag.message}</span>
+                  </div>
+                  {diag.code !== "OK" && (
+                    <span className="text-md font-mono bg-red-500/50 px-2 py-1 rounded">
+                      {diag.code}
+                    </span>
+                  )}
                 </div>
-                <div className="w-full flex flex-col gap-2 overflow-y-auto" style={{maxHeight: '120px'}}>
-                    {diagnosticMessages.map((diag, index) => (
-                        <div key={index} className="flex justify-between items-center">
-                            <div className="flex gap-3 items-center">
-                                {diag.code !== "OK" && (
-                                    <img src="/Warning.png" alt="warning-logo" className="w-6 h-6"/>
-                                )}
-                                <span className="text-md">{diag.message}</span>
-                            </div>
-                            {diag.code !== "OK" && (
-                                <span className="text-md font-mono bg-red-500/50 px-2 py-1 rounded">
-                                    {diag.code}
-                                </span>
-                            )}
-                        </div>
-                    ))}
-                </div>
+              ))}
             </div>
-            {/* Static placeholder divs */}
-            <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl ">
-             
+          </div>
+          {/* Static placeholder divs */}
+          <div className="w-full flex  gap-3  p-3 h-auto min-h-[165px] bg-primary rounded-3xl ">
+            <button
+              onClick={() => setIsChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  SOC vs RPM
+                </span>
+                <BarChart3 className="w-20 h-20 text-white" />
+              </div>
+            </button>
+
+              {/* another  */}
+               <button
+              onClick={() => setIsBatteryChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Battery Analytics
+                </span>
+                <Battery className="w-20 h-20 text-white" />
+              </div>
+            </button>
+
+          </div>
+          <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl"></div>
+          <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
+            <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Voltage</span>
+              <span className="text-3xl">{data.volt?.toFixed(0) ?? "0"} V</span>
             </div>
-            <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl"></div>
-            <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
-              <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Voltage</span>
-               <span className="text-3xl">{data.volt?.toFixed(0) ?? '0'} V</span>
-             </div>
-              <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-               <span className="text-xl">Current</span>
-               <span className="text-3xl">{data.amp?.toFixed(0) ?? '0'} A</span>
-             </div>
+            <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl">Current</span>
+              <span className="text-3xl">{data.amp?.toFixed(0) ?? "0"} A</span>
             </div>
+          </div>
         </div>
       </div>
     </>
   );
 };
 
-export default In40Dashboard ;
+export default In40Dashboard;

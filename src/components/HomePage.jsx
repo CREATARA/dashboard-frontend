@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+// import BackgroundGridEffect from './RippleEffect';
+import BackgroundGrid from './RippleEffect';
 
 const HomePage = () => {
   return (
     <>
+      
       {/* CSS for animations */}
       <style>
         {`
@@ -56,8 +59,12 @@ const HomePage = () => {
             height={300} // Adjust height as needed
           />
       </header>
-      
-      <div className="flex flex-col lg:flex-row items-center justify-center min-h-screen w-full overflow-hidden bg-gray-900">
+
+      {/* background effect */}
+      <BackgroundGrid/>
+
+     
+      <div className="flex  flex-col lg:flex-row items-center justify-center min-h-screen w-full overflow-hidden bg-gray-900">
         {/* Left Side: Image with Light Effect */}
         <div className="w-full lg:w-1/2 flex justify-center p-8 relative">
           <div className="animate-slide-in">
