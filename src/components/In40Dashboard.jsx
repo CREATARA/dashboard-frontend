@@ -2,8 +2,11 @@ import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
 import axios from "axios";
 import In40Analytics from "./In40Analytics";
-import { BarChart3, Battery } from "lucide-react";
+import { BarChart3, Battery, BellElectric, CirclePowerIcon, CloudLightning, Power, PowerIcon, PowerSquare, PowerSquareIcon, ThermometerIcon } from "lucide-react";
 import In40BatteryHealth from "./In40BatteryHealth";
+import In40PowerChartModal from "./In40PowerChartModal";
+import { ImPower } from "react-icons/im";
+import In40ThermalModal from "./In40ThermalModal";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -77,6 +80,8 @@ const In40Dashboard = () => {
   const [isChartOpen, setIsChartOpen] = useState(false);
   const clientRef = useRef(null);
   const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
+  const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
+  const [isThermalChartOpen, setIsThermalChartOpen] = useState(false); 
 
   const dataBuffer = useRef({}); // Buffer to hold incoming data
   let saveInterval = useRef(null); // Use ref to hold interval ID
@@ -251,16 +256,27 @@ const In40Dashboard = () => {
 
   return (
     <>
-    {/* this is anyalytics componnet  */}
+      {/* this is anyalytics componnet  */}
       <In40Analytics
         isOpen={isChartOpen}
         onClose={() => setIsChartOpen(false)}
       />
-  {/* this is the  battery analytics components  */}
+      {/* this is the  battery analytics components  */}
       <In40BatteryHealth
         isOpen={isBatteryChartOpen}
         onClose={() => setIsBatteryChartOpen(false)}
       />
+
+      {/* this is power chart modal */}
+      <In40PowerChartModal
+        isOpen={isPowerChartOpen}
+        onClose={() => setIsPowerChartOpen(false)}
+      />
+      <In40ThermalModal
+        isOpen={isThermalChartOpen}
+        onClose={() => setIsThermalChartOpen(false)}
+      />
+
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
         {/* --- Left Side --- */}
@@ -492,8 +508,8 @@ const In40Dashboard = () => {
               </div>
             </button>
 
-              {/* another  */}
-               <button
+            {/* another  */}
+            <button
               onClick={() => setIsBatteryChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
@@ -504,9 +520,35 @@ const In40Dashboard = () => {
                 <Battery className="w-20 h-20 text-white" />
               </div>
             </button>
+            {/* power consumption button  */}
+            <button
+              onClick={() => setIsPowerChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Power Consumption
+                </span>
+                <ImPower  className="w-14 h-14 text-white" />
+              </div>
+            </button>
+
 
           </div>
-          <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl"></div>
+          <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
+
+               <button
+              onClick={() => setIsThermalChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Thermal Analytics
+                </span>
+                <ThermometerIcon  className="w-14 h-14 text-white" />
+              </div>
+            </button>
+          </div>
           <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Voltage</span>
