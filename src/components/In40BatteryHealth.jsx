@@ -10,7 +10,7 @@ const In40BatteryHealth = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/api/data/in40/analytics/battery-health');
+                const response = await axios.get('https://creatara-backend.onrender.com/api/data/in40/analytics/battery-health');
                 const formattedData = response.data.map(item => ({
                     soc: item.soc,
                     btemp: item.btemp,

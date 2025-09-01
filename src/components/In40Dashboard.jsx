@@ -101,7 +101,7 @@ const In40Dashboard = () => {
 
   const saveDataToDatabase = async (payload) => {
     try {
-      await axios.post("http://localhost:3001/api/data/in40", payload);
+      await axios.post("https://creatara-backend.onrender.com/api/data/in40", payload);
       console.log("Successfully sent buffered IN40 data to the backend.");
     } catch (error) {
       console.error("Error sending IN40 data to backend:", error.message);

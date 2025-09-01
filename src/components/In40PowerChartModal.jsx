@@ -10,7 +10,7 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/api/data/in40/analytics/power');
+                const response = await axios.get('https://creatara-backend.onrender.com/api/data/in40/analytics/power');
                 const formattedData = response.data.map(item => ({
                     // Calculate power in Watts
                     power: item.volt * item.amp,

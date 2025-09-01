@@ -10,7 +10,7 @@ const In40Analytics = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/api/data/in40/analytics/rpm-vs-soc');
+                const response = await axios.get('https://creatara-backend.onrender.com/api/data/in40/analytics/rpm-vs-soc');
                 const formattedData = response.data.map(item => ({
                     rpm: item.rpm,
                     soc: item.soc,
