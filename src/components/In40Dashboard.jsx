@@ -2,7 +2,18 @@ import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
 import axios from "axios";
 import In40Analytics from "./In40Analytics";
-import { BarChart3, Battery, BellElectric, CirclePowerIcon, CloudLightning, Power, PowerIcon, PowerSquare, PowerSquareIcon, ThermometerIcon } from "lucide-react";
+import {
+  BarChart3,
+  Battery,
+  BellElectric,
+  CirclePowerIcon,
+  CloudLightning,
+  Power,
+  PowerIcon,
+  PowerSquare,
+  PowerSquareIcon,
+  ThermometerIcon,
+} from "lucide-react";
 import In40BatteryHealth from "./In40BatteryHealth";
 import In40PowerChartModal from "./In40PowerChartModal";
 import { ImPower } from "react-icons/im";
@@ -81,7 +92,7 @@ const In40Dashboard = () => {
   const clientRef = useRef(null);
   const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
   const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
-  const [isThermalChartOpen, setIsThermalChartOpen] = useState(false); 
+  const [isThermalChartOpen, setIsThermalChartOpen] = useState(false);
 
   const dataBuffer = useRef({}); // Buffer to hold incoming data
   let saveInterval = useRef(null); // Use ref to hold interval ID
@@ -101,7 +112,10 @@ const In40Dashboard = () => {
 
   const saveDataToDatabase = async (payload) => {
     try {
-      await axios.post("https://creatara-backend.onrender.com/api/data/in40", payload);
+      await axios.post(
+        "https://creatara-backend.onrender.com/api/data/in40",
+        payload
+      );
       console.log("Successfully sent buffered IN40 data to the backend.");
     } catch (error) {
       console.error("Error sending IN40 data to backend:", error.message);
@@ -508,7 +522,7 @@ const In40Dashboard = () => {
               </div>
             </button>
 
-            {/* another  */}
+            {/* battery graph */}
             <button
               onClick={() => setIsBatteryChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
@@ -529,15 +543,12 @@ const In40Dashboard = () => {
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Power Consumption
                 </span>
-                <ImPower  className="w-14 h-14 text-white" />
+                <ImPower className="w-14 h-14 text-white" />
               </div>
             </button>
-
-
           </div>
           <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
-
-               <button
+            <button
               onClick={() => setIsThermalChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
@@ -545,7 +556,7 @@ const In40Dashboard = () => {
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Thermal Analytics
                 </span>
-                <ThermometerIcon  className="w-14 h-14 text-white" />
+                <ThermometerIcon className="w-14 h-14 text-white" />
               </div>
             </button>
           </div>

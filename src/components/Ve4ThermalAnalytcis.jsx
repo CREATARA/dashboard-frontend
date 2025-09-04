@@ -1,0 +1,71 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const Ve4ThermalAnalytics = ({ isOpen, onClose }) => {
+    const [chartData, setChartData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let intervalId = null;
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('https://creatara-backend.onrender.com/api/data/ve4/analytics/thermal');
+                const formattedData = response.data.map(item => ({
+                    power: item.volt * item.amp,
+                    btemp: item.btemp,
+                    mtemp: item.mtemp,
+                    time: new Date(item.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+                }));
+                setChartData(formattedData);
+            } catch (error) {
+                console.error("Failed to fetch chart data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (isOpen) {
+            setLoading(true);
+            fetchData();
+            intervalId = setInterval(fetchData, 60000); // Refresh every minute
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+            <div className="bg-primary p-6 rounded-2xl shadow-lg w-full max-w-4xl">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-white">Thermal Performance (Temp & Power vs. Time)</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div style={{ width: '100%', height: 400 }}>
+                    {loading ? (
+                        <div className="text-white text-center">Loading Chart...</div>
+                    ) : (
+                        <ResponsiveContainer>
+                            <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
+                                <XAxis dataKey="time" stroke="#A0AEC0" />
+                                <YAxis yAxisId="left" label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} stroke="#facc15" />
+                                <YAxis yAxisId="right" orientation="right" label={{ value: 'Temp (°C)', angle: -90, position: 'insideRight', fill: '#A0AEC0' }} stroke="#f87171" />
+                                <Tooltip contentStyle={{ backgroundColor: '#1A202C', border: '1px solid #4A5568' }} />
+                                <Legend />
+                                <Bar yAxisId="left" dataKey="power" name="Power (W)" fill="rgba(250, 204, 21, 0.4)" />
+                                <Line yAxisId="right" type="monotone" dataKey="btemp" name="Battery Temp (°C)" stroke="#f87171" strokeWidth={2} dot={false} activeDot={{ r: 8 }} isAnimationActive={false} />
+                                <Line yAxisId="right" type="monotone" dataKey="mtemp" name="Motor Temp (°C)" stroke="#fb923c" strokeWidth={2} dot={false} activeDot={{ r: 8 }} isAnimationActive={false} />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+export default Ve4ThermalAnalytics;

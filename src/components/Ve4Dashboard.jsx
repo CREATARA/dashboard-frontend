@@ -1,6 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-import axios from 'axios';
+import axios from "axios";
+import Ve4Analytics from "./Ve4Analytics";
+import { BarChart3, Battery, ThermometerIcon } from "lucide-react";
+import Ve4BatteryAnalytics from "./Ve4BatteryAnalytics";
+import { ImPower } from "react-icons/im";
+import Ve4PowerAnalytics from "./Ve4PowerAnalytics";
+import Ve4ThermalAnalytics from "./Ve4ThermalAnalytcis";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -68,9 +74,15 @@ const Ve4Dashboard = () => {
   const [data, setData] = useState(DUMMY_DATA);
   const [displayTimestamp, setDisplayTimestamp] = useState(new Date());
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessageTime, setLastMessageTime] = useState(null); // <-- New state for timeout
+  const [lastMessageTime, setLastMessageTime] = useState(null);
+  const [isChartOpen, setIsChartOpen] = useState(false);
+  const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
+  const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
+  const [isThermalChartOpen, setIsThermalChartOpen] = useState(false);
+
+  // <-- New state for timeout
   const clientRef = useRef(null);
-    const dataBuffer = useRef({}); // Buffer to hold incoming data
+  const dataBuffer = useRef({}); // Buffer to hold incoming data
 
   // --- MQTT Connection Logic ---
   const MQTT_URL = import.meta.env.VITE_MQTT_URL_VE4;
@@ -84,17 +96,18 @@ const Ve4Dashboard = () => {
   };
   const topic = import.meta.env.VITE_MQTT_TOPIC || "can/data";
 
-
-
-    //  database code 
-    const saveDataToDatabase = async (payload) => {
-        try {
-            await axios.post('https://creatara-backend.onrender.com/api/data/ve4', payload);
-            console.log("Successfully sent buffered Ve4 data to the backend.");
-        } catch (error) {
-            console.error('Error sending Ve4 data to backend:', error.message);
-        }
-    };
+  //  database code
+  const saveDataToDatabase = async (payload) => {
+    try {
+      await axios.post(
+        "https://creatara-backend.onrender.com/api/data/ve4",
+        payload
+      );
+      console.log("Successfully sent buffered Ve4 data to the backend.");
+    } catch (error) {
+      console.error("Error sending Ve4 data to backend:", error.message);
+    }
+  };
 
   useEffect(() => {
     if (clientRef.current) return;
@@ -108,18 +121,18 @@ const Ve4Dashboard = () => {
       );
       setIsConnected(true);
       client.subscribe(topic);
-         const timer = setTimeout(() => {
-                console.log("1 minute has passed. Sending collected Ve4 data.");
-                saveDataToDatabase(dataBuffer.current);
-            }, 60000);
-         client.timer = timer;
+      const timer = setTimeout(() => {
+        console.log("1 minute has passed. Sending collected Ve4 data.");
+        saveDataToDatabase(dataBuffer.current);
+      }, 60000);
+      client.timer = timer;
     });
 
     client.on("message", (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
         setData((prevData) => ({ ...prevData, ...payload }));
-         dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
+        dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
         setLastMessageTime(Date.now());
         // dataBuffer.current = { ...dataBuffer.current, ...payload }; // <-- Update timestamp on every message
       } catch (err) {
@@ -231,8 +244,31 @@ const Ve4Dashboard = () => {
     "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)"; // #EB3915
 
   return (
-    
     <>
+      {/* first graph soc vs rpm  */}
+      <Ve4Analytics
+        isOpen={isChartOpen}
+        onClose={() => setIsChartOpen(false)}
+      />
+
+      {/* battery health graph */}
+      <Ve4BatteryAnalytics
+        isOpen={isBatteryChartOpen}
+        onClose={() => setIsBatteryChartOpen(false)}
+      />
+
+      {/* power analytics */}
+      <Ve4PowerAnalytics
+        isOpen={isPowerChartOpen}
+        onClose={() => setIsPowerChartOpen(false)}
+      />
+
+      {/* thermal analytics */}
+      <Ve4ThermalAnalytics
+        isOpen={isThermalChartOpen}
+        onClose={() => setIsThermalChartOpen(false)}
+      />
+
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
         {/* --- Left Side --- */}
@@ -262,7 +298,7 @@ const Ve4Dashboard = () => {
               <div className="flex flex-col items-center">
                 <span className="text-xl">Motor</span>
                 <span className="text-xl">
-                 {data.vehicle_on ? "ON" : "OFF"}
+                  {data.vehicle_on ? "ON" : "OFF"}
                 </span>
               </div>
             </div>
@@ -441,8 +477,60 @@ const Ve4Dashboard = () => {
             </div>
           </div>
           {/* Static placeholder divs */}
-          <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl "></div>
-          <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl"></div>
+          <div className="w-full   flex  gap-3  p-3 h-auto min-h-[165px] bg-primary rounded-3xl ">
+            <button
+              onClick={() => setIsChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  SOC vs RPM
+                </span>
+                <BarChart3 className="w-20 h-20 text-white" />
+              </div>
+            </button>
+
+            {/* battery health graph */}
+
+            <button
+              onClick={() => setIsBatteryChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Battery Analytics
+                </span>
+                <Battery className="w-20 h-20 text-white" />
+              </div>
+            </button>
+
+            {/* power analytics */}
+
+            <button
+              onClick={() => setIsBatteryChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Power Consumption
+                </span>
+                <ImPower className="w-14 h-14 text-white" />
+              </div>
+            </button>
+          </div>
+          <div className="w-full  flex  gap-3   p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
+            <button
+              onClick={() => setIsThermalChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Thermal Analytics
+                </span>
+                <ThermometerIcon className="w-14 h-14 text-white" />
+              </div>
+            </button>
+          </div>
           <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl">Voltage</span>
