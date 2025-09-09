@@ -14,7 +14,7 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                 const formattedData = response.data.map(item => ({
                     // Calculate power in Watts
                     power: item.volt * item.amp,
-                    time: new Date(item.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+                    time: new Date(item.received_at.replace(' ', 'T')).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
                 }));
                 setChartData(formattedData);
             } catch (error) {

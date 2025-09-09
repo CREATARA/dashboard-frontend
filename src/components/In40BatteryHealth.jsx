@@ -14,7 +14,7 @@ const In40BatteryHealth = ({ isOpen, onClose }) => {
                 const formattedData = response.data.map(item => ({
                     soc: item.soc,
                     btemp: item.btemp,
-                    time: new Date(item.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+                    time: new Date(item.received_at.replace(' ', 'T')).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
                 }));
                 setChartData(formattedData);
             } catch (error) {
