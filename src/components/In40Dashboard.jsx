@@ -514,11 +514,11 @@ const In40Dashboard = () => {
               onClick={() => setIsChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
+                <img src="./ChartBar.png" alt="chart" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   SOC vs RPM
                 </span>
-                <BarChart3 className="w-20 h-20 text-white" />
               </div>
             </button>
 
@@ -527,11 +527,11 @@ const In40Dashboard = () => {
               onClick={() => setIsBatteryChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
+                <img src="./BatteryCharging.png" alt="chart" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Battery Analytics
                 </span>
-                <Battery className="w-20 h-20 text-white" />
               </div>
             </button>
             {/* power consumption button  */}
@@ -539,11 +539,11 @@ const In40Dashboard = () => {
               onClick={() => setIsPowerChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
+                <img src="./Lightning.png" alt="power" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Power Consumption
                 </span>
-                <ImPower className="w-14 h-14 text-white" />
               </div>
             </button>
           </div>
@@ -552,11 +552,11 @@ const In40Dashboard = () => {
               onClick={() => setIsThermalChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
+                <img src="./Thermometer.png" alt="thermal" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Thermal Analytics
                 </span>
-                <ThermometerIcon className="w-14 h-14 text-white" />
               </div>
             </button>
           </div>
