@@ -7,6 +7,8 @@ import Ve4BatteryAnalytics from "./Ve4BatteryAnalytics";
 import { ImPower } from "react-icons/im";
 import Ve4PowerAnalytics from "./Ve4PowerAnalytics";
 import Ve4ThermalAnalytics from "./Ve4ThermalAnalytcis";
+import Ve4Acceleration from "./Ve4Acceleration";
+import Ve4ModeChart from "./Ve4ModeChart";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -79,6 +81,8 @@ const Ve4Dashboard = () => {
   const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
   const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
   const [isThermalChartOpen, setIsThermalChartOpen] = useState(false);
+  const [isAccelerationChartOpen, setIsAccelerationChartOpen] = useState(false);
+  const [isModeChartOpen, setIsModeChartOpen] = useState(false);
 
   // <-- New state for timeout
   const clientRef = useRef(null);
@@ -268,6 +272,16 @@ const Ve4Dashboard = () => {
         isOpen={isThermalChartOpen}
         onClose={() => setIsThermalChartOpen(false)}
       />
+   
+      <Ve4Acceleration
+        isOpen={isAccelerationChartOpen}
+        onClose={() => setIsAccelerationChartOpen(false)}
+      />
+
+     <Ve4ModeChart
+       isOpen={isModeChartOpen}
+       onClose={() => setIsModeChartOpen(false)}
+     />
 
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
@@ -482,11 +496,11 @@ const Ve4Dashboard = () => {
               onClick={() => setIsChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
+                <img src="./ChartBar.png" alt="chart" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   SOC vs RPM
                 </span>
-                <BarChart3 className="w-20 h-20 text-white" />
               </div>
             </button>
 
@@ -496,11 +510,11 @@ const Ve4Dashboard = () => {
               onClick={() => setIsBatteryChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
+               <img src="./BatteryCharging.png" alt="Battery Charging" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Battery Analytics
                 </span>
-                <Battery className="w-20 h-20 text-white" />
               </div>
             </button>
 
@@ -510,11 +524,11 @@ const Ve4Dashboard = () => {
               onClick={() => setIsBatteryChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
+                <img src="./Lightning.png" alt="Power" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Power Consumption
                 </span>
-                <ImPower className="w-14 h-14 text-white" />
               </div>
             </button>
           </div>
@@ -523,11 +537,33 @@ const Ve4Dashboard = () => {
               onClick={() => setIsThermalChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full  justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
+                <img src="./Thermometer.png" alt="Thermal" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Thermal Analytics
                 </span>
-                <ThermometerIcon className="w-14 h-14 text-white" />
+              </div>
+            </button>
+            <button
+              onClick={() => setIsAccelerationChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full gap-4 justify-center items-center rounded-3xl ">
+                <img src="./Speedometer.png" alt="acc" width={35} height={35} />
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Acc vs Soc
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setIsModeChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full gap-4 justify-center items-center rounded-3xl ">
+                <img src="./ChartPie.png" alt="modechart" width={35} height={35} />
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Mode Chart
+                </span>
               </div>
             </button>
           </div>

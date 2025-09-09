@@ -18,6 +18,8 @@ import In40BatteryHealth from "./In40BatteryHealth";
 import In40PowerChartModal from "./In40PowerChartModal";
 import { ImPower } from "react-icons/im";
 import In40ThermalModal from "./In40ThermalModal";
+import In40Acceleration from "./In40Accelaration";
+import In40PieChart from "./In40PieChart";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -93,6 +95,10 @@ const In40Dashboard = () => {
   const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
   const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
   const [isThermalChartOpen, setIsThermalChartOpen] = useState(false);
+  const [isAccelerationChartOpen, setIsAccelerationChartOpen] = useState(false)
+   const [isModeChartOpen, setIsModeChartOpen] = useState(false);
+
+
 
   const dataBuffer = useRef({}); // Buffer to hold incoming data
   let saveInterval = useRef(null); // Use ref to hold interval ID
@@ -291,6 +297,15 @@ const In40Dashboard = () => {
         onClose={() => setIsThermalChartOpen(false)}
       />
 
+     <In40Acceleration
+       isOpen={ isAccelerationChartOpen}
+       onClose={() => setIsAccelerationChartOpen(false)}
+     />
+
+     <In40PieChart
+       isOpen={isModeChartOpen}
+       onClose={() => setIsModeChartOpen(false)}
+     />
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
         {/* --- Left Side --- */}
@@ -547,7 +562,7 @@ const In40Dashboard = () => {
               </div>
             </button>
           </div>
-          <div className="w-full   p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
+          <div className="w-full  flex gap-3  p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
             <button
               onClick={() => setIsThermalChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
@@ -556,6 +571,28 @@ const In40Dashboard = () => {
                 <img src="./Thermometer.png" alt="thermal" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Thermal Analytics
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setIsAccelerationChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
+                <img src="./Speedometer.png" alt="acc" width={35} height={35} />
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Acc Vs Soc
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setIsModeChartOpen(true)}
+              className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
+            >
+              <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
+                <img src="./ChartPie.png" alt="acc" width={35} height={35} />
+                <span className="w-full text-xl h-full   flex justify-center items-center">
+                  Mode Chart
                 </span>
               </div>
             </button>
