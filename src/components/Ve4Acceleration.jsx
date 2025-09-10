@@ -25,7 +25,7 @@ const Ve4Acceleration = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/api/data/ve4/analytics/acceleration');
+                const response = await axios.get('https://creatara-backend.onrender.com/api/data/ve4/analytics/acceleration');
 
                 // Process data to calculate acceleration
                 const processedData = response.data.map((item, index, arr) => {
