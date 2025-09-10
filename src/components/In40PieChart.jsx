@@ -14,7 +14,7 @@ const In40PieChart = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/api/data/in40/analytics/mode-distribution');
+                const response = await axios.get('https://creatara-backend.onrender.com/api/data/in40/analytics/mode-distribution');
                 const formattedData = response.data.map(item => ({
                     name: V_MODE_MAP[item.vmode] || `Mode ${item.vmode}`,
                     value: item.count,
