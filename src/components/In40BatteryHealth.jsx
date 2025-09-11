@@ -47,7 +47,7 @@ const In40BatteryHealth = ({ isOpen, onClose }) => {
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
 
-                const response = await axios.post('http://localhost:3001/api/data/in40/analytics/battery-health', body);
+                const response = await axios.post('https://creatara-backend.onrender.com/api/data/in40/analytics/battery-health', body);
 
                 const formattedData = response.data.map(item => ({
                     ...item,

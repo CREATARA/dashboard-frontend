@@ -50,7 +50,7 @@ const In40Analytics = ({ isOpen, onClose }) => {
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
 
-                const response = await axios.post('http://localhost:3001/api/data/in40/analytics/rpm-vs-soc', body);
+                const response = await axios.post('https://creatara-backend.onrender.com/api/data/in40/analytics/rpm-vs-soc', body);
 
                 const formattedData = response.data.map(item => ({
                     ...item, // Keep the original received_at for the tooltip
