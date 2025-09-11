@@ -15,7 +15,7 @@ export default {
         thirdry: '#99C842',
         active:'#0FE000',
         inactive:'#EB3915',
-        textcolor:'#D9D9D9',
+        textcolor:'#000000',
         danger: {
           light: '#f87171',
           DEFAULT: '#ef4444',

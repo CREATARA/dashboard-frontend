@@ -370,24 +370,24 @@ const Ve4Dashboard = () => {
           {/* Row 2 */}
           <div className="w-full h-[165px] flex items-center  pl-3 gap-3 rounded-3xl bg-primary">
             <div className="w-[220px] h-[135px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Brakes</span>
+              <span className=" text-textcolor font-medium  text-xl">Brakes</span>
               <span className="text-3xl">{formatStatus(data.brake)}</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Kill Switch</span>
+              <span className="text-xl  font-medium text-textcolor">Kill Switch</span>
               <span className="text-3xl">
                 {data.kill ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Push Button</span>
+              <span className="text-xl font-medium  text-textcolor">Push Button</span>
               <span className="text-3xl">{formatStatus(data.pbutton)}</span>
             </div>
           </div>
           {/* Row 3 */}
           <div className="w-full h-[165px] rounded-3xl flex items-center  pl-3 gap-3 bg-primary">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Speed</span>
+              <span className="text-xl  font-medium text-textcolor">Speed</span>
               <span className="text-3xl">
                 {data.speed?.toFixed(0) ?? "0"} km/hr
               </span>
@@ -408,11 +408,11 @@ const Ve4Dashboard = () => {
               </div>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Mode</span>
+              <span className="text-xl  font-medium  text-textcolor">Mode</span>
               <span className="text-3xl">{getVModeName(data.vmode)}</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Odometer</span>
+              <span className="text-xl   font-medium text-textcolor">Odometer</span>
               <span className="text-3xl">
                 {data.odometer?.toFixed(2) ?? "0.00"} km
               </span>
@@ -421,14 +421,14 @@ const Ve4Dashboard = () => {
           {/* Row 4 */}
           <div className="w-full flex h-[165px] pl-3  rounded-3xl bg-primary items-center gap-3">
             <div className="w-[170px] h-[140px] rounded-3xl bg-secondry gap-2 flex flex-col justify-center p-4">
-              <span className="text-xl">Charging</span>
-              <span className="text-3xl">
+              <span className="text-xl  font-medium text-textcolor">Charging</span>
+              <span className="text-3xl"> 
                 {data.charging ? "Active" : "Inactive"}
               </span>
             </div>
             {/* this is the range and for now it is static  */}
             <div className="w-[170px] h-[140px] rounded-3xl bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Range</span>
+              <span className="text-xl  font-medium text-textcolor">Range</span>
               <span className="text-3xl">
                 {calculateRange(data.soc).toFixed(1)} km
               </span>
@@ -446,11 +446,11 @@ const Ve4Dashboard = () => {
               </div>
             </div>
             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Battery Temp</span>
+              <span className="text-xl  font-medium text-textcolor">Battery Temp</span>
               <span className="text-3xl">{data.btemp}°C</span>
             </div>
             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Motor Temp</span>
+              <span className="text-xl  font-medium text-textcolor ">Motor Temp</span>
               <span className="text-3xl">{data.mtemp}°C</span>
             </div>
           </div>
@@ -569,11 +569,11 @@ const Ve4Dashboard = () => {
           </div>
           <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Voltage</span>
+              <span className="text-xl  font-medium text-textcolor">Voltage</span>
               <span className="text-3xl">{data.volt?.toFixed(0) ?? "0"} V</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl">Current</span>
+              <span className="text-xl   font-medium text-textcolor">Current</span>
               <span className="text-3xl">{data.amp?.toFixed(0) ?? "0"} A</span>
             </div>
           </div>

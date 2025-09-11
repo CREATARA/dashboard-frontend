@@ -18,7 +18,7 @@ import In40BatteryHealth from "./In40BatteryHealth";
 import In40PowerChartModal from "./In40PowerChartModal";
 import { ImPower } from "react-icons/im";
 import In40ThermalModal from "./In40ThermalModal";
-import In40Acceleration from "./In40Accelaration";
+import In40Acceleration from "./In40Acceleration";
 import In40PieChart from "./In40PieChart";
 // --- Data Mappings and Dummy Data ---
 
@@ -404,19 +404,19 @@ const In40Dashboard = () => {
           {/* Row 2 */}
           <div className="w-full h-[165px] flex items-center  pl-3 gap-3 rounded-3xl bg-primary">
             <div className="w-[220px] h-[135px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  text-textcolor">Brakes</span>
+              <span className="text-xl   font-medium text-textcolor">Brakes</span>
               <span className="text-3xl">
                 {data.brake ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Kill Switch</span>
+              <span className="text-xl  font-medium text-textcolor">Kill Switch</span>
               <span className="text-3xl">
                 {data.kill ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Push Button</span>
+              <span className="text-xl  font-medium text-textcolor">Push Button</span>
               <span className="text-3xl">
                 {data.pbutton ? "Active" : "Inactive"}
               </span>
@@ -425,7 +425,7 @@ const In40Dashboard = () => {
           {/* Row 3 */}
           <div className="w-full h-[165px] rounded-3xl flex items-center  pl-3 gap-3 bg-primary">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Speed</span>
+              <span className="text-xl  font-medium text-textcolor">Speed</span>
               <span className="text-3xl">
                 {calculatedSpeed.toFixed(0)} km/hr
               </span>
@@ -442,15 +442,15 @@ const In40Dashboard = () => {
                 ></div>
               </div>
               <div className=" flex justify-end items-end">
-                <span className="text-xl text-textcolor">Readings</span>
+                <span className="text-xl ">Readings</span>
               </div>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Mode</span>
+              <span className="text-xl  font-medium text-textcolor">Mode</span>
               <span className="text-3xl">{getVModeName(data.vmode)}</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Odometer</span>
+              <span className="text-xl  font-medium text-textcolor">Odometer</span>
               <span className="text-3xl">
                 {data.odometer?.toFixed(2) ?? "0.00"} km
               </span>
@@ -459,14 +459,14 @@ const In40Dashboard = () => {
           {/* Row 4 */}
           <div className="w-full flex h-[165px] pl-3  rounded-3xl bg-primary items-center gap-3">
             <div className="w-[170px] h-[140px] rounded-3xl bg-secondry gap-2 flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Charging</span>
+              <span className="text-xl  font-medium text-textcolor">Charging</span>
               <span className="text-3xl">
                 {data.charging ? "Active" : "Inactive"}
               </span>
             </div>
             {/* this is the range and for now it is static  */}
-            <div className="w-[170px] h-[140px] rounded-3xl bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Range</span>
+            <div className="w-[170px] h-[140px] rounded-3xl gap-3 bg-secondry flex flex-col justify-center p-4">
+              <span className="text-xl  font-medium text-textcolor">Range</span>
               <span className="text-3xl">
                 {calculateRange(data.soc).toFixed(1)} km
               </span>
@@ -479,16 +479,16 @@ const In40Dashboard = () => {
                 ></div>
               </div>
               <div className="w-[60%]  h-full justify-end flex-col flex items-baseline">
-                <span className="text-xl text-textcolor ">SOC</span>
+                <span className="text-xl  ">SOC</span>
                 <span className="text-3xl">{data.soc}%</span>
               </div>
             </div>
             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Battery Temp</span>
+              <span className="text-xl  font-medium text-textcolor">Battery Temp</span>
               <span className="text-3xl">{data.btemp}°C</span>
             </div>
             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor" >Motor Temp</span>
+              <span className="text-xl  font-medium text-textcolor" >Motor Temp</span>
               <span className="text-3xl">{data.mtemp}°C</span>
             </div>
           </div>
@@ -497,11 +497,24 @@ const In40Dashboard = () => {
         {/* --- Right Side (Diagnostics) --- */}
         <div className="w-2/4 min-h-screen gap-3 pr-2 flex flex-col items-center justify-center">
           <div className="w-full h-auto min-h-[165px] flex flex-col p-3 bg-primary rounded-3xl">
-            <div className="w-full flex justify-between items-center mb-2">
+            <div className="w-full flex justify-between items-center   mb-2">
+              <div>
+
               <span className="text-xl font-bold ">Diagnostics</span>
-              <span className="text-lg">
-                {displayTimestamp.toLocaleTimeString()}
+              </div>
+              <div className=" flex gap-3">
+
+              <span className="text-lg flex ">
+                { displayTimestamp.getDate().toString().padStart(2, '0')}/
+                {(displayTimestamp.getMonth() + 1).toString().padStart(2, '0')}/
+                {displayTimestamp.getFullYear()}
+            
               </span>
+              <span className="text-lg flex ">
+                
+                { displayTimestamp.toLocaleTimeString().toUpperCase()}
+              </span>
+              </div>
             </div>
             <div
               className="w-full flex flex-col gap-2 overflow-y-auto"
@@ -604,11 +617,11 @@ const In40Dashboard = () => {
           </div>
           <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Voltage</span>
+              <span className="text-xl  font-medium  text-textcolor">Voltage</span>
               <span className="text-3xl">{data.volt?.toFixed(0) ?? "0"} V</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl text-textcolor">Current</span>
+              <span className="text-xl  font-medium  text-textcolor">Current</span>
               <span className="text-3xl">{data.amp?.toFixed(0) ?? "0"} A</span>
             </div>
           </div>

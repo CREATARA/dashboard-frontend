@@ -13,6 +13,14 @@ const formatDateForSQL = (date) => {
     return `${year}-${month}-${day}`;
 };
 
+// Helper to calculate speed in meters per second from your custom formula
+const calculateMsFromRpm = (rpm) => {
+    if (typeof rpm !== "number" || rpm <= 0) return 0;
+    const kmPerHour = rpm / 11;
+    // Convert km/h to m/s by dividing by 3.6
+    return kmPerHour / 3.6;
+};
+
 // Custom Tooltip Component
 const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -23,14 +31,15 @@ const CustomTooltip = ({ active, payload }) => {
         return (
             <div className="p-2 bg-gray-800 border border-gray-600 rounded-md text-white">
                 <p>{`Time: ${fullDateTime}`}</p>
-                <p className="text-yellow-400">{`Power: ${data.power.toFixed(2)} W`}</p>
+                <p className="text-blue-400">{`SOC: ${data.soc}%`}</p>
+                <p className="text-teal-400">{`Acceleration: ${data.acceleration} m/s²`}</p>
             </div>
         );
     }
     return null;
 };
 
-const In40PowerChartModal = ({ isOpen, onClose }) => {
+const In40Acceleration = ({ isOpen, onClose }) => {
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState(null);
@@ -45,16 +54,31 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
 
-                const response = await axios.post('http://localhost:3001/api/data/in40/analytics/power', body);
+                const response = await axios.post('http://localhost:3001/api/data/in40/analytics/acceleration', body);
 
-                const formattedData = response.data.map(item => ({
-                    ...item,
-                    power: item.volt * item.amp,
-                    timeLabel: new Date(item.received_at.replace(' ', 'T')).toLocaleString('en-US', {
-                         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true 
-                    }),
-                }));
-                setChartData(formattedData);
+                const processedData = response.data.map((item, index, arr) => {
+                    let acceleration = 0;
+                    if (index > 0) {
+                        const prevItem = arr[index - 1];
+                        const currentSpeedMs = calculateMsFromRpm(item.rpm);
+                        const prevSpeedMs = calculateMsFromRpm(prevItem.rpm);
+                        const timeDiffSeconds = (new Date(item.received_at.replace(' ', 'T')) - new Date(prevItem.received_at.replace(' ', 'T'))) / 1000;
+
+                        if (timeDiffSeconds > 0) {
+                            acceleration = (currentSpeedMs - prevSpeedMs) / timeDiffSeconds;
+                        }
+                    }
+                    return {
+                        ...item,
+                        soc: item.soc,
+                        acceleration: parseFloat(acceleration.toFixed(2)),
+                        timeLabel: new Date(item.received_at.replace(' ', 'T')).toLocaleString('en-US', {
+                             month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true 
+                        }),
+                    };
+                });
+
+                setChartData(processedData);
             } catch (error) {
                 console.error("Failed to fetch chart data:", error);
             } finally {
@@ -73,7 +97,7 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
             <div className="bg-primary p-6 rounded-2xl shadow-lg w-full max-w-5xl">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-white">Power Consumption Over Time</h2>
+                    <h2 className="text-2xl font-bold text-white">Acceleration Impact on Battery</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
                 </div>
 
@@ -85,10 +109,12 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                             <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
                                 <XAxis dataKey="timeLabel" stroke="#A0AEC0" isAnimationActive={false} />
-                                <YAxis label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} stroke="#facc15" />
+                                <YAxis yAxisId="left" label={{ value: 'SOC (%)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} stroke="#38bdf8" domain={[0, 100]} />
+                                <YAxis yAxisId="right" orientation="right" label={{ value: 'Accel (m/s²)', angle: -90, position: 'insideRight', fill: '#A0AEC0' }} stroke="#34d399" />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
-                                <Line type="monotone" dataKey="power" name="Power (W)" stroke="#facc15" dot={false} activeDot={{ r: 8 }} isAnimationActive={false} />
+                                <Line yAxisId="left" type="monotone" dataKey="soc" name="SOC (%)" stroke="#38bdf8" dot={false} activeDot={{ r: 8 }} isAnimationActive={false} />
+                                <Line yAxisId="right" type="monotone" dataKey="acceleration" name="Acceleration (m/s²)" stroke="#34d399" dot={false} activeDot={{ r: 8 }} isAnimationActive={false} />
                             </LineChart>
                         </ResponsiveContainer>
                     ) : (
@@ -110,4 +136,4 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
         </div>
     );
 };
-export default In40PowerChartModal;
+export default In40Acceleration;
