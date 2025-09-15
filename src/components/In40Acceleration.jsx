@@ -42,7 +42,7 @@ const CustomTooltip = ({ active, payload }) => {
     }
     return null;
 };
-
+//acceleration component
 const In40Acceleration = ({ isOpen, onClose }) => {
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
