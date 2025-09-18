@@ -10,7 +10,7 @@ const Ve4BatteryAnalytics = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('https://creatara-backend.onrender.com/api/data/ve4/analytics/battery-health');
+                const response = await axios.get('https://dashboard-backend-h8qz.onrender.com/api/data/ve4/analytics/battery-health');
                 const formattedData = response.data.map(item => ({
                     soc: item.soc,
                     btemp: item.btemp,
