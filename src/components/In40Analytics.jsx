@@ -50,7 +50,7 @@ const In40Analytics = ({ isOpen, onClose }) => {
                     startDate: formatDateForSQL(startDate) + ' 00:00:00',
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
-                const response = await axios.post('https://creatara-backend.onrender.com/api/data/in40/analytics/rpm-vs-soc', body);
+                const response = await axios.post('https://dashboard-backend-h8qz.onrender.com/api/data/in40/analytics/rpm-vs-soc', body);
                 const formattedData = response.data.map(item => ({
                     ...item,
                     timeLabel: new Date(item.received_at.replace(' ', 'T')).toLocaleString('en-US', {
