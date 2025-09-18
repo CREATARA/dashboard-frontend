@@ -10,7 +10,7 @@ const Ve4PowerAnalytics = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('https://creatara-backend.onrender.com/api/data/ve4/analytics/power');
+                const response = await axios.get('https://dashboard-backend-h8qz.onrender.com/api/data/ve4/analytics/power');
                 const formattedData = response.data.map(item => ({
                     // Calculate power in Watts
                     power: item.volt * item.amp,
