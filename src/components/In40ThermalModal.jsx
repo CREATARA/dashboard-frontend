@@ -53,7 +53,7 @@ const In40ThermalModal = ({ isOpen, onClose }) => {
                     startDate: formatDateForSQL(startDate) + ' 00:00:00',
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
-                const response = await axios.post('https://creatara-backend.onrender.com/api/data/in40/analytics/thermal', body);
+                const response = await axios.post('https://dashboard-backend-h8qz.onrender.com/api/data/in40/analytics/thermal', body);
                 const formattedData = response.data.map(item => ({
                     ...item,
                     power: item.volt * item.amp,
