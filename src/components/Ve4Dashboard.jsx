@@ -1,12 +1,12 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-import In40Analytics from "../components/In40Analytics";
-import In40BatteryHealth from "../components/In40BatteryHealth";
-import In40PowerChartModal from "../components/In40PowerChartModal";
-import In40ThermalModal from "../components/In40ThermalModal";
-import In40Acceleration from "../components/In40Acceleration"
-import In40PieChart from "../components/In40PieChart";
+import Ve4Analytics from "../components/Ve4Analytics";
+import Ve4BatteryAnalytics from "../components/Ve4BatteryAnalytics";
+import  Ve4PowerAnalytics from "../components/ Ve4PowerAnalytics";
+import Ve4ThermalAnalytics from "../components/Ve4ThermalAnalytics";
+import Ve4Acceleration from "../components/Ve4Acceleration"
+import Ve4ModeChart from "../components/Ve4ModeChart";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -208,27 +208,27 @@ const Ve4Dashboard = () => {
 
   return (
     <>
-      <In40Analytics
+      < Ve4Analytics
         isOpen={isChartOpen}
         onClose={() => setIsChartOpen(false)}
       />
-      <In40BatteryHealth
+      <Ve4BatteryAnalytics
         isOpen={isBatteryChartOpen}
         onClose={() => setIsBatteryChartOpen(false)}
       />
-      <In40PowerChartModal
+      < Ve4PowerAnalytics
         isOpen={isPowerChartOpen}
         onClose={() => setIsPowerChartOpen(false)}
       />
-      <In40ThermalModal
+      <Ve4ThermalAnalytics
         isOpen={isThermalChartOpen}
         onClose={() => setIsThermalChartOpen(false)}
       />
-      <In40Acceleration
+      <Ve4Acceleration
         isOpen={isAccelerationChartOpen}
         onClose={() => setIsAccelerationChartOpen(false)}
       />
-      <In40PieChart
+      <Ve4ModeChart
         isOpen={isModeChartOpen}
         onClose={() => setIsModeChartOpen(false)}
       />
