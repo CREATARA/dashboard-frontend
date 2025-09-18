@@ -58,7 +58,7 @@ const In40Acceleration = ({ isOpen, onClose }) => {
                     startDate: formatDateForSQL(startDate) + ' 00:00:00',
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
-                const response = await axios.post('https://creatara-backend.onrender.com/api/data/in40/analytics/acceleration', body);
+                const response = await axios.post('https://dashboard-backend-h8qz.onrender.com/api/data/in40/analytics/acceleration', body);
                 const processedData = response.data.map((item, index, arr) => {
                     let acceleration = 0;
                     if (index > 0) {
