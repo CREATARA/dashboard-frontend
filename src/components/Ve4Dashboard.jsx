@@ -85,16 +85,16 @@ const Ve4Dashboard = () => {
 
   // --- MQTT Connection Logic for LIVE UI ONLY ---
   useEffect(() => {
-    const MQTT_URL = import.meta.env.VITE_MQTT_URL_IN40;
+    const MQTT_URL = import.meta.env.VITE_MQTT_URL_VE4;
     const MQTT_OPTIONS = {
-      username: import.meta.env.VITE_MQTT_USERNAME_IN40,
-      password: import.meta.env.VITE_MQTT_PASSWORD_IN40,
+      username: import.meta.env.VITE_MQTT_USERNAME,
+      password: import.meta.env.VITE_MQTT_PASSWORD,
       keepalive: 60,
       reconnectPeriod: 1000,
-      clientId: `frontend_in40_${Math.random().toString(16).substr(2, 8)}`,
+      clientId:  import.meta.env.VITE_MQTT_CLIENT_ID,
       clean: true,
     };
-    const topic = import.meta.env.VITE_MQTT_TOPIC_IN40 || "can/data";
+    const topic = import.meta.env.VITE_MQTT_TOPIC || "can/data";
     
     if (clientRef.current) return;
 
