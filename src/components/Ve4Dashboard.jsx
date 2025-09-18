@@ -4,7 +4,7 @@ import mqtt from "mqtt";
 import Ve4Analytics from "../components/Ve4Analytics";
 import Ve4BatteryAnalytics from "../components/Ve4BatteryAnalytics";
 import  Ve4PowerAnalytics from "../components/ Ve4PowerAnalytics";
-import Ve4ThermalAnalytics from "../components/Ve4ThermalAnalytics";
+import Ve4ThermalAnalytics from "../components/Ve4ThermalAnalytcis";
 import Ve4Acceleration from "../components/Ve4Acceleration"
 import Ve4ModeChart from "../components/Ve4ModeChart";
 // --- Data Mappings and Dummy Data ---
