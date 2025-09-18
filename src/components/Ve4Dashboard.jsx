@@ -1,14 +1,12 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-import axios from "axios";
-import Ve4Analytics from "./Ve4Analytics";
-import { BarChart3, Battery, ThermometerIcon } from "lucide-react";
-import Ve4BatteryAnalytics from "./Ve4BatteryAnalytics";
-import { ImPower } from "react-icons/im";
-import Ve4PowerAnalytics from "./Ve4PowerAnalytics";
-import Ve4ThermalAnalytics from "./Ve4ThermalAnalytcis";
-import Ve4Acceleration from "./Ve4Acceleration";
-import Ve4ModeChart from "./Ve4ModeChart";
+import In40Analytics from "../components/In40Analytics";
+import In40BatteryHealth from "../components/In40BatteryHealth";
+import In40PowerChartModal from "../components/In40PowerChartModal";
+import In40ThermalModal from "../components/In40ThermalModal";
+import In40Acceleration from "../components/In40Acceleration"
+import In40PieChart from "../components/In40PieChart";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -20,7 +18,7 @@ const DUMMY_DATA = {
   brake: false,
   kill: false,
   pbutton: false,
-  speed: 0,
+  rpm: 0,
   vmode: 0,
   odometer: 0,
   charging: false,
@@ -78,78 +76,52 @@ const Ve4Dashboard = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessageTime, setLastMessageTime] = useState(null);
   const [isChartOpen, setIsChartOpen] = useState(false);
+  const clientRef = useRef(null);
   const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
   const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
   const [isThermalChartOpen, setIsThermalChartOpen] = useState(false);
   const [isAccelerationChartOpen, setIsAccelerationChartOpen] = useState(false);
   const [isModeChartOpen, setIsModeChartOpen] = useState(false);
 
-  // <-- New state for timeout
-  const clientRef = useRef(null);
-  // const dataBuffer = useRef({}); // Buffer to hold incoming data
-
-  // --- MQTT Connection Logic ---
-  const MQTT_URL = import.meta.env.VITE_MQTT_URL_VE4;
-  const MQTT_OPTIONS = {
-    username: import.meta.env.VITE_MQTT_USERNAME,
-    password: import.meta.env.VITE_MQTT_PASSWORD,
-    keepalive: 60,
-    reconnectPeriod: 1000,
-    clientId: import.meta.env.VITE_MQTT_CLIENT_ID,
-    clean: true,
-  };
-  const topic = import.meta.env.VITE_MQTT_TOPIC || "can/data";
-
-  //  database code
-  // const saveDataToDatabase = async (payload) => {
-  //   try {
-  //     await axios.post(
-  //       "https://creatara-backend.onrender.com/api/data/ve4",
-  //       payload
-  //     );
-  //     console.log("Successfully sent buffered Ve4 data to the backend.");
-  //   } catch (error) {
-  //     console.error("Error sending Ve4 data to backend:", error.message);
-  //   }
-  // };
-
+  // --- MQTT Connection Logic for LIVE UI ONLY ---
   useEffect(() => {
+    const MQTT_URL = import.meta.env.VITE_MQTT_URL_IN40;
+    const MQTT_OPTIONS = {
+      username: import.meta.env.VITE_MQTT_USERNAME_IN40,
+      password: import.meta.env.VITE_MQTT_PASSWORD_IN40,
+      keepalive: 60,
+      reconnectPeriod: 1000,
+      clientId: `frontend_in40_${Math.random().toString(16).substr(2, 8)}`,
+      clean: true,
+    };
+    const topic = import.meta.env.VITE_MQTT_TOPIC_IN40 || "can/data";
+    
     if (clientRef.current) return;
 
     const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
     clientRef.current = client;
 
     client.on("connect", () => {
-      console.log(
-        "✅ MQTT Connected to Ve4. Starting 1-minute data collection."
-      );
+      console.log("✅ Frontend MQTT Connected for Live UI");
       setIsConnected(true);
       client.subscribe(topic);
-      // const timer = setTimeout(() => {
-      //   console.log("1 minute has passed. Sending collected Ve4 data.");
-      //   saveDataToDatabase(dataBuffer.current);
-      // }, 60000);
-      // client.timer = timer;
     });
 
     client.on("message", (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
         setData((prevData) => ({ ...prevData, ...payload }));
-        // dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
         setLastMessageTime(Date.now());
-        // dataBuffer.current = { ...dataBuffer.current, ...payload }; // <-- Update timestamp on every message
       } catch (err) {
         console.error("MQTT Parse error:", err);
       }
     });
-    // <-- Call the function to save data to the database
+
     client.on("close", () => {
-      console.log("❌ MQTT Disconnected");
+      console.log("❌ Frontend MQTT Disconnected");
       setIsConnected(false);
-      setLastMessageTime(null); // <-- Reset timer on disconnect
+      setLastMessageTime(null);
       setData(DUMMY_DATA);
-      if (client.timer) clearTimeout(client.timer);
     });
 
     client.on("error", (err) => {
@@ -158,16 +130,9 @@ const Ve4Dashboard = () => {
       client.end();
     });
 
-    // ** CLEANUP FUNCTION **
     return () => {
       if (clientRef.current) {
-        // First, clean up things that depend on the client object
-        if (clientRef.current.timer) {
-          clearTimeout(clientRef.current.timer);
-        }
-        // Then, end the connection
         clientRef.current.end(true);
-        // Finally, nullify the reference
         clientRef.current = null;
       }
     };
@@ -175,23 +140,17 @@ const Ve4Dashboard = () => {
 
   // --- Timeout Logic Effect ---
   useEffect(() => {
-    // Don't run the timer if not connected or if we've never received a message
     if (!isConnected || !lastMessageTime) {
       return;
     }
-
     const timeoutInterval = setInterval(() => {
-      const timeSinceLastMessage = (Date.now() - lastMessageTime) / 1000; // in seconds
-
-      // Check if 70 seconds (1 min 10 secs) have passed
+      const timeSinceLastMessage = (Date.now() - lastMessageTime) / 1000;
       if (timeSinceLastMessage > 70) {
         console.warn("MQTT data stream timed out. Reverting to dummy data.");
         setData(DUMMY_DATA);
-        setLastMessageTime(null); // Stop the timer from firing again until a new message arrives
+        setLastMessageTime(null);
       }
-    }, 5000); // Check every 5 seconds
-
-    // Cleanup function to clear the interval
+    }, 1000);
     return () => clearInterval(timeoutInterval);
   }, [isConnected, lastMessageTime]);
 
@@ -205,7 +164,6 @@ const Ve4Dashboard = () => {
   // --- Helper Functions ---
   const formatStatus = (val) => (val ? "Active" : "Inactive");
   const getVModeName = (mode) => V_MODE_MAP[mode] || "N/A";
-
   const getDiagnosticMessages = (codes) => {
     if (!codes || codes.length === 0) {
       return [{ code: "OK", message: "No Errors" }];
@@ -216,80 +174,71 @@ const Ve4Dashboard = () => {
     }));
   };
 
-  // Generates a smooth linear gradient for the speed gauge background
-
-  const getSpeedColor = (speed) => {
-    if (speed > 80) return "#AD2408";
-    if (speed > 60) return "#EB3915";
-    if (speed > 40) return "#E0C600";
-    if (speed > 20) return "#0FE000";
-    if (speed >= 10) return "#55B000";
-    return "transparent"; // Default for speed < 10
+  const calculateSpeedFromRpm = (rpm) => {
+    if (typeof rpm !== "number" || rpm <= 0) return 0;
+    const kmPerHour = rpm / 11;
+    return kmPerHour;
   };
 
-  const getSpeedPercentage = (speed) => {
-    const clampedSpeed = Math.min(speed, MAX_SPEED);
+  const getSpeedColor = (calculatedSpeed) => {
+    if (calculatedSpeed > 80) return "#AD2408";
+    if (calculatedSpeed > 60) return "#EB3915";
+    if (calculatedSpeed > 40) return "#E0C600";
+    if (calculatedSpeed > 20) return "#0FE000";
+    if (calculatedSpeed >= 10) return "#55B000";
+    return "transparent";
+  };
+
+  const getSpeedPercentage = (calculatedSpeed) => {
+    const clampedSpeed = Math.min(calculatedSpeed, MAX_SPEED);
     return (clampedSpeed / MAX_SPEED) * 100;
   };
 
-  // **New function to calculate range based on SOC**
   const calculateRange = (soc) => {
-    const MAX_RANGE_AT_100_SOC = 140; // in km
+    const MAX_RANGE_AT_100_SOC = 97; // in km
     if (typeof soc !== "number" || soc < 0) return 0;
     const range = (soc / 100) * MAX_RANGE_AT_100_SOC;
     return range;
   };
 
   const diagnosticMessages = getDiagnosticMessages(data.DIAGNOSTICS);
-
-  const greenFilter =
-    "invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)"; // #0FE000
-  const redFilter =
-    "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)"; // #EB3915
+  const greenFilter = "invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)";
+  const redFilter = "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)";
+  const calculatedSpeed = calculateSpeedFromRpm(data.rpm);
 
   return (
     <>
-      {/* first graph soc vs rpm  */}
-      <Ve4Analytics
+      <In40Analytics
         isOpen={isChartOpen}
         onClose={() => setIsChartOpen(false)}
       />
-
-      {/* battery health graph */}
-      <Ve4BatteryAnalytics
+      <In40BatteryHealth
         isOpen={isBatteryChartOpen}
         onClose={() => setIsBatteryChartOpen(false)}
       />
-
-      {/* power analytics */}
-      <Ve4PowerAnalytics
+      <In40PowerChartModal
         isOpen={isPowerChartOpen}
         onClose={() => setIsPowerChartOpen(false)}
       />
-
-      {/* thermal analytics */}
-      <Ve4ThermalAnalytics
+      <In40ThermalModal
         isOpen={isThermalChartOpen}
         onClose={() => setIsThermalChartOpen(false)}
       />
-   
-      <Ve4Acceleration
+      <In40Acceleration
         isOpen={isAccelerationChartOpen}
         onClose={() => setIsAccelerationChartOpen(false)}
       />
-
-     <Ve4ModeChart
-       isOpen={isModeChartOpen}
-       onClose={() => setIsModeChartOpen(false)}
-     />
-
+      <In40PieChart
+        isOpen={isModeChartOpen}
+        onClose={() => setIsModeChartOpen(false)}
+      />
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
         {/* --- Left Side --- */}
         <div className="w-3/4  p-3 min-h-screen gap-3 flex flex-col items-center justify-center">
           {/* Row 1 */}
           <div className="w-full px-3  h-[165px] rounded-3xl flex items-center gap-3 bg-primary">
-            <div className="w-[140px] h-[140px] rounded-3xl gap-4 p-3 flex flex-col justify-center items-center bg-secondry">
+            <div className="w-[140px] h-[140px] rounded-3xl gap-4 p-5 flex flex-col justify-center items-center bg-secondry">
               <img
                 src="/vehicle.png"
                 alt="Vehicle Status"
@@ -297,9 +246,12 @@ const Ve4Dashboard = () => {
                 width={35}
                 style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
               />
-              <span className="text-xl">
-                Vehicle {data.vehicle_on ? "ON" : "OFF"}
-              </span>
+              <div className="flex flex-col items-center">
+                <span className="text-xl">Vehicle</span>
+                <span className="text-xl">
+                  {data.vehicle_on ? "ON" : "OFF"}
+                </span>
+              </div>
             </div>
             <div className="gap-4 flex rounded-3xl flex-col justify-center items-center w-[140px] h-[140px] bg-secondry">
               <img
@@ -325,7 +277,9 @@ const Ve4Dashboard = () => {
               />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Handle Lock</span>
-                <span className="text-xl">{formatStatus(data.steer_lock)}</span>
+                <span className="text-xl">
+                  {data.steer_lock ? "Active" : "Inactive"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] rounded-3xl h-[140px] flex gap-4 flex-col justify-center items-center bg-secondry">
@@ -337,7 +291,9 @@ const Ve4Dashboard = () => {
               />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Battery Lock</span>
-                <span className="text-xl">{formatStatus(data.bat_lock)}</span>
+                <span className="text-xl">
+                  {data.bat_lock ? "Active" : "Inactive"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] h-[140px] rounded-3xl bg-secondry flex gap-4 flex-col justify-center items-center">
@@ -349,7 +305,9 @@ const Ve4Dashboard = () => {
               />
               <div className="flex flex-col items-center">
                 <span className="text-xl">Side Stand</span>
-                <span className="text-xl">{formatStatus(data.sstand)}</span>
+                <span className="text-xl">
+                  {data.sstand ? "Active" : "Inactive"}
+                </span>
               </div>
             </div>
             <div className="w-[140px] h-[140px] rounded-3xl bg-secondry flex gap-4 flex-col justify-center items-center">
@@ -370,8 +328,10 @@ const Ve4Dashboard = () => {
           {/* Row 2 */}
           <div className="w-full h-[165px] flex items-center  pl-3 gap-3 rounded-3xl bg-primary">
             <div className="w-[220px] h-[135px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className=" text-textcolor font-medium  text-xl">Brakes</span>
-              <span className="text-3xl">{formatStatus(data.brake)}</span>
+              <span className="text-xl   font-medium text-textcolor">Brakes</span>
+              <span className="text-3xl">
+                {data.brake ? "Active" : "Inactive"}
+              </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl  font-medium text-textcolor">Kill Switch</span>
@@ -380,8 +340,10 @@ const Ve4Dashboard = () => {
               </span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl font-medium  text-textcolor">Push Button</span>
-              <span className="text-3xl">{formatStatus(data.pbutton)}</span>
+              <span className="text-xl  font-medium text-textcolor">Push Button</span>
+              <span className="text-3xl">
+                {data.pbutton ? "Active" : "Inactive"}
+              </span>
             </div>
           </div>
           {/* Row 3 */}
@@ -389,7 +351,7 @@ const Ve4Dashboard = () => {
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl  font-medium text-textcolor">Speed</span>
               <span className="text-3xl">
-                {data.speed?.toFixed(0) ?? "0"} km/hr
+                {calculatedSpeed.toFixed(0)} km/hr
               </span>
             </div>
             <div className="w-[150px]   gap-2 justify-start  h-[140px]  flex">
@@ -397,22 +359,22 @@ const Ve4Dashboard = () => {
                 <div
                   className="w-full"
                   style={{
-                    height: `${getSpeedPercentage(data.speed)}%`,
-                    backgroundColor: getSpeedColor(data.speed),
+                    height: `${getSpeedPercentage(calculatedSpeed)}%`,
+                    backgroundColor: getSpeedColor(calculatedSpeed),
                     transition: "height 0.5s ease, background-color 0.5s ease",
                   }}
                 ></div>
               </div>
               <div className=" flex justify-end items-end">
-                <span className="text-xl">Readings</span>
+                <span className="text-xl ">Readings</span>
               </div>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  font-medium  text-textcolor">Mode</span>
+              <span className="text-xl  font-medium text-textcolor">Mode</span>
               <span className="text-3xl">{getVModeName(data.vmode)}</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl   font-medium text-textcolor">Odometer</span>
+              <span className="text-xl  font-medium text-textcolor">Odometer</span>
               <span className="text-3xl">
                 {data.odometer?.toFixed(2) ?? "0.00"} km
               </span>
@@ -422,12 +384,11 @@ const Ve4Dashboard = () => {
           <div className="w-full flex h-[165px] pl-3  rounded-3xl bg-primary items-center gap-3">
             <div className="w-[170px] h-[140px] rounded-3xl bg-secondry gap-2 flex flex-col justify-center p-4">
               <span className="text-xl  font-medium text-textcolor">Charging</span>
-              <span className="text-3xl"> 
+              <span className="text-3xl">
                 {data.charging ? "Active" : "Inactive"}
               </span>
             </div>
-            {/* this is the range and for now it is static  */}
-            <div className="w-[170px] h-[140px] rounded-3xl bg-secondry flex flex-col justify-center p-4">
+            <div className="w-[170px] h-[140px] rounded-3xl gap-3 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl  font-medium text-textcolor">Range</span>
               <span className="text-3xl">
                 {calculateRange(data.soc).toFixed(1)} km
@@ -441,7 +402,7 @@ const Ve4Dashboard = () => {
                 ></div>
               </div>
               <div className="w-[60%]  h-full justify-end flex-col flex items-baseline">
-                <span className="text-xl">SOC</span>
+                <span className="text-xl  ">SOC</span>
                 <span className="text-3xl">{data.soc}%</span>
               </div>
             </div>
@@ -450,7 +411,7 @@ const Ve4Dashboard = () => {
               <span className="text-3xl">{data.btemp}°C</span>
             </div>
             <div className="w-[170px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  font-medium text-textcolor ">Motor Temp</span>
+              <span className="text-xl  font-medium text-textcolor" >Motor Temp</span>
               <span className="text-3xl">{data.mtemp}°C</span>
             </div>
           </div>
@@ -459,11 +420,24 @@ const Ve4Dashboard = () => {
         {/* --- Right Side (Diagnostics) --- */}
         <div className="w-2/4 min-h-screen gap-3 pr-2 flex flex-col items-center justify-center">
           <div className="w-full h-auto min-h-[165px] flex flex-col p-3 bg-primary rounded-3xl">
-            <div className="w-full flex justify-between items-center mb-2">
-              <span className="text-xl font-bold">Diagnostics</span>
-              <span className="text-lg">
-                {displayTimestamp.toLocaleTimeString()}
+            <div className="w-full flex justify-between items-center   mb-2">
+              <div>
+
+              <span className="text-xl font-bold ">Diagnostics</span>
+              </div>
+              <div className=" flex gap-3">
+
+              <span className="text-lg flex ">
+                { displayTimestamp.getDate().toString().padStart(2, '0')}/
+                {(displayTimestamp.getMonth() + 1).toString().padStart(2, '0')}/
+                {displayTimestamp.getFullYear()}
+            
               </span>
+              <span className="text-lg flex ">
+                
+                { displayTimestamp.toLocaleTimeString().toUpperCase()}
+              </span>
+              </div>
             </div>
             <div
               className="w-full flex flex-col gap-2 overflow-y-auto"
@@ -491,7 +465,7 @@ const Ve4Dashboard = () => {
             </div>
           </div>
           {/* Static placeholder divs */}
-          <div className="w-full   flex  gap-3  p-3 h-auto min-h-[165px] bg-primary rounded-3xl ">
+          <div className="w-full flex  gap-3  p-3 h-auto min-h-[165px] bg-primary rounded-3xl ">
             <button
               onClick={() => setIsChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
@@ -504,41 +478,38 @@ const Ve4Dashboard = () => {
               </div>
             </button>
 
-            {/* battery health graph */}
-
+            {/* battery graph */}
             <button
               onClick={() => setIsBatteryChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
               <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
-               <img src="./BatteryCharging.png" alt="Battery Charging" width={35} height={35} />
+                <img src="./BatteryCharging.png" alt="chart" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Battery Analytics
                 </span>
               </div>
             </button>
-
-            {/* power analytics */}
-
+            {/* power consumption button  */}
             <button
-              onClick={() => setIsBatteryChartOpen(true)}
+              onClick={() => setIsPowerChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
               <div className="flex flex-col w-full  gap-4 justify-center items-center rounded-3xl ">
-                <img src="./Lightning.png" alt="Power" width={35} height={35} />
+                <img src="./Lightning.png" alt="power" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Power Consumption
                 </span>
               </div>
             </button>
           </div>
-          <div className="w-full  flex  gap-3   p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
+          <div className="w-full  flex gap-3  p-3 h-auto min-h-[165px] bg-primary rounded-3xl">
             <button
               onClick={() => setIsThermalChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
               <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
-                <img src="./Thermometer.png" alt="Thermal" width={35} height={35} />
+                <img src="./Thermometer.png" alt="thermal" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Thermal Analytics
                 </span>
@@ -548,10 +519,10 @@ const Ve4Dashboard = () => {
               onClick={() => setIsAccelerationChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full gap-4 justify-center items-center rounded-3xl ">
+              <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
                 <img src="./Speedometer.png" alt="acc" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
-                  Acc vs Soc
+                  Acc Vs Soc
                 </span>
               </div>
             </button>
@@ -559,8 +530,8 @@ const Ve4Dashboard = () => {
               onClick={() => setIsModeChartOpen(true)}
               className="w-[140px] h-[140px] rounded-3xl flex flex-col gap-4 justify-center items-center bg-secondry"
             >
-              <div className="flex flex-col w-full gap-4 justify-center items-center rounded-3xl ">
-                <img src="./ChartPie.png" alt="modechart" width={35} height={35} />
+              <div className="flex flex-col w-full gap-4  justify-center items-center rounded-3xl ">
+                <img src="./ChartPie.png" alt="acc" width={35} height={35} />
                 <span className="w-full text-xl h-full   flex justify-center items-center">
                   Mode Chart
                 </span>
@@ -569,11 +540,11 @@ const Ve4Dashboard = () => {
           </div>
           <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  font-medium text-textcolor">Voltage</span>
+              <span className="text-xl  font-medium   text-textcolor">Voltage</span>
               <span className="text-3xl">{data.volt?.toFixed(0) ?? "0"} V</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl   font-medium text-textcolor">Current</span>
+              <span className="text-xl  font-medium   text-textcolor">Current</span>
               <span className="text-3xl">{data.amp?.toFixed(0) ?? "0"} A</span>
             </div>
           </div>
