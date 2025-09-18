@@ -86,7 +86,7 @@ const Ve4Dashboard = () => {
 
   // <-- New state for timeout
   const clientRef = useRef(null);
-  const dataBuffer = useRef({}); // Buffer to hold incoming data
+  // const dataBuffer = useRef({}); // Buffer to hold incoming data
 
   // --- MQTT Connection Logic ---
   const MQTT_URL = import.meta.env.VITE_MQTT_URL_VE4;
@@ -101,17 +101,17 @@ const Ve4Dashboard = () => {
   const topic = import.meta.env.VITE_MQTT_TOPIC || "can/data";
 
   //  database code
-  const saveDataToDatabase = async (payload) => {
-    try {
-      await axios.post(
-        "https://creatara-backend.onrender.com/api/data/ve4",
-        payload
-      );
-      console.log("Successfully sent buffered Ve4 data to the backend.");
-    } catch (error) {
-      console.error("Error sending Ve4 data to backend:", error.message);
-    }
-  };
+  // const saveDataToDatabase = async (payload) => {
+  //   try {
+  //     await axios.post(
+  //       "https://creatara-backend.onrender.com/api/data/ve4",
+  //       payload
+  //     );
+  //     console.log("Successfully sent buffered Ve4 data to the backend.");
+  //   } catch (error) {
+  //     console.error("Error sending Ve4 data to backend:", error.message);
+  //   }
+  // };
 
   useEffect(() => {
     if (clientRef.current) return;
@@ -125,18 +125,18 @@ const Ve4Dashboard = () => {
       );
       setIsConnected(true);
       client.subscribe(topic);
-      const timer = setTimeout(() => {
-        console.log("1 minute has passed. Sending collected Ve4 data.");
-        saveDataToDatabase(dataBuffer.current);
-      }, 60000);
-      client.timer = timer;
+      // const timer = setTimeout(() => {
+      //   console.log("1 minute has passed. Sending collected Ve4 data.");
+      //   saveDataToDatabase(dataBuffer.current);
+      // }, 60000);
+      // client.timer = timer;
     });
 
     client.on("message", (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
         setData((prevData) => ({ ...prevData, ...payload }));
-        dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
+        // dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
         setLastMessageTime(Date.now());
         // dataBuffer.current = { ...dataBuffer.current, ...payload }; // <-- Update timestamp on every message
       } catch (err) {
