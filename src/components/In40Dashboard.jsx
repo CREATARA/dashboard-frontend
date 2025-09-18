@@ -1,25 +1,12 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-import axios from "axios";
-import In40Analytics from "./In40Analytics";
-import {
-  BarChart3,
-  Battery,
-  BellElectric,
-  CirclePowerIcon,
-  CloudLightning,
-  Power,
-  PowerIcon,
-  PowerSquare,
-  PowerSquareIcon,
-  ThermometerIcon,
-} from "lucide-react";
-import In40BatteryHealth from "./In40BatteryHealth";
-import In40PowerChartModal from "./In40PowerChartModal";
-import { ImPower } from "react-icons/im";
-import In40ThermalModal from "./In40ThermalModal";
-import In40Acceleration from "./In40Acceleration";
-import In40PieChart from "./In40PieChart";
+import In40Analytics from "../components/In40Analytics";
+import In40BatteryHealth from "../components/In40BatteryHealth";
+import In40PowerChartModal from "../components/In40PowerChartModal";
+import In40ThermalModal from "../components/In40ThermalModal";
+import In40Acceleration from "../components/In40Acceleration"
+import In40PieChart from "../components/In40PieChart";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
@@ -79,8 +66,6 @@ const V_MODE_MAP = {
   5: "Reverse",
 };
 
-// --- Vehicle Specific Constants for Speed Calculation ---
-
 const MAX_SPEED = 120; // Define a maximum speed for the gauge percentage
 
 // --- Component ---
@@ -89,79 +74,53 @@ const In40Dashboard = () => {
   const [data, setData] = useState(DUMMY_DATA);
   const [displayTimestamp, setDisplayTimestamp] = useState(new Date());
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessageTime, setLastMessageTime] = useState(null); // <-- New state for timeout
+  const [lastMessageTime, setLastMessageTime] = useState(null);
   const [isChartOpen, setIsChartOpen] = useState(false);
   const clientRef = useRef(null);
   const [isBatteryChartOpen, setIsBatteryChartOpen] = useState(false);
   const [isPowerChartOpen, setIsPowerChartOpen] = useState(false);
   const [isThermalChartOpen, setIsThermalChartOpen] = useState(false);
-  const [isAccelerationChartOpen, setIsAccelerationChartOpen] = useState(false)
-   const [isModeChartOpen, setIsModeChartOpen] = useState(false);
+  const [isAccelerationChartOpen, setIsAccelerationChartOpen] = useState(false);
+  const [isModeChartOpen, setIsModeChartOpen] = useState(false);
 
-
-
-  const dataBuffer = useRef({}); // Buffer to hold incoming data
-  let saveInterval = useRef(null); // Use ref to hold interval ID
-  // --- MQTT Connection Logic ---
-  const MQTT_URL = import.meta.env.VITE_MQTT_URL_IN40;
-  const MQTT_OPTIONS = {
-    username: import.meta.env.VITE_MQTT_USERNAME_IN40,
-    password: import.meta.env.VITE_MQTT_PASSWORD_IN40,
-    keepalive: 60,
-    reconnectPeriod: 1000,
-    clientId: import.meta.env.VITE_MQTT_CLIENT_ID_IN40,
-    clean: true,
-  };
-  const topic = import.meta.env.VITE_MQTT_TOPIC_IN40 || "can/data";
-
-  //  database code
-
-  const saveDataToDatabase = async (payload) => {
-    try {
-      await axios.post(
-        "https://creatara-backend.onrender.com/api/data/in40",
-        payload
-      );
-      console.log("Successfully sent buffered IN40 data to the backend.");
-    } catch (error) {
-      console.error("Error sending IN40 data to backend:", error.message);
-    }
-  };
-
+  // --- MQTT Connection Logic for LIVE UI ONLY ---
   useEffect(() => {
+    const MQTT_URL = import.meta.env.VITE_MQTT_URL_IN40;
+    const MQTT_OPTIONS = {
+      username: import.meta.env.VITE_MQTT_USERNAME_IN40,
+      password: import.meta.env.VITE_MQTT_PASSWORD_IN40,
+      keepalive: 60,
+      reconnectPeriod: 1000,
+      clientId: `frontend_in40_${Math.random().toString(16).substr(2, 8)}`,
+      clean: true,
+    };
+    const topic = import.meta.env.VITE_MQTT_TOPIC_IN40 || "can/data";
+    
     if (clientRef.current) return;
 
     const client = mqtt.connect(MQTT_URL, MQTT_OPTIONS);
     clientRef.current = client;
 
     client.on("connect", () => {
-      console.log("✅ MQTT Connected");
+      console.log("✅ Frontend MQTT Connected for Live UI");
       setIsConnected(true);
       client.subscribe(topic);
-      saveInterval.current = setInterval(() => {
-        console.log("1 minute has passed. Sending collected IN40 data.");
-        saveDataToDatabase(dataBuffer.current);
-      }, 60000);
     });
 
     client.on("message", (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
-        console.log("in40 data", payload);
         setData((prevData) => ({ ...prevData, ...payload }));
-        dataBuffer.current = { ...dataBuffer.current, ...payload }; // update database buffer
-        setLastMessageTime(Date.now()); // <-- Update timestamp on every message
+        setLastMessageTime(Date.now());
       } catch (err) {
         console.error("MQTT Parse error:", err);
       }
     });
 
     client.on("close", () => {
-      console.log("❌ MQTT Disconnected");
-      if (client.timer) clearTimeout(client.timer);
-      clearInterval(saveInterval.current); // clear the timer
+      console.log("❌ Frontend MQTT Disconnected");
       setIsConnected(false);
-      setLastMessageTime(null); // <-- Reset timer on disconnect
+      setLastMessageTime(null);
       setData(DUMMY_DATA);
     });
 
@@ -170,16 +129,10 @@ const In40Dashboard = () => {
       setLastMessageTime(null);
       client.end();
     });
-    // ** CLEANUP FUNCTION **
+
     return () => {
       if (clientRef.current) {
-        // First, clean up things that depend on the client object
-        if (clientRef.current.timer) {
-          clearTimeout(clientRef.current.timer);
-        }
-        // Then, end the connection
         clientRef.current.end(true);
-        // Finally, nullify the reference
         clientRef.current = null;
       }
     };
@@ -187,23 +140,17 @@ const In40Dashboard = () => {
 
   // --- Timeout Logic Effect ---
   useEffect(() => {
-    // Don't run the timer if not connected or if we've never received a message
     if (!isConnected || !lastMessageTime) {
       return;
     }
-
     const timeoutInterval = setInterval(() => {
-      const timeSinceLastMessage = (Date.now() - lastMessageTime) / 1000; // in seconds
-
-      // Check if 70 seconds (1 min 10 secs) have passed
+      const timeSinceLastMessage = (Date.now() - lastMessageTime) / 1000;
       if (timeSinceLastMessage > 70) {
         console.warn("MQTT data stream timed out. Reverting to dummy data.");
         setData(DUMMY_DATA);
-        setLastMessageTime(null); // Stop the timer from firing again until a new message arrives
+        setLastMessageTime(null);
       }
-    }, 5000); // Check every 5 seconds
-
-    // Cleanup function to clear the interval
+    }, 1000);
     return () => clearInterval(timeoutInterval);
   }, [isConnected, lastMessageTime]);
 
@@ -217,7 +164,6 @@ const In40Dashboard = () => {
   // --- Helper Functions ---
   const formatStatus = (val) => (val ? "Active" : "Inactive");
   const getVModeName = (mode) => V_MODE_MAP[mode] || "N/A";
-
   const getDiagnosticMessages = (codes) => {
     if (!codes || codes.length === 0) {
       return [{ code: "OK", message: "No Errors" }];
@@ -228,19 +174,11 @@ const In40Dashboard = () => {
     }));
   };
 
-
-
-  // const GEAR_RATIO = 1.0;
-  // ** NEW: Function to calculate speed (km/h) from motor RPM **
   const calculateSpeedFromRpm = (rpm) => {
     if (typeof rpm !== "number" || rpm <= 0) return 0;
-
-    const kmPerHour = rpm / 11; // 0.1525 meters is the wheel radius (12 inches diameter)
-
+    const kmPerHour = rpm / 11;
     return kmPerHour;
   };
-
-  // Generates a smooth linear gradient for the speed gauge background
 
   const getSpeedColor = (calculatedSpeed) => {
     if (calculatedSpeed > 80) return "#AD2408";
@@ -248,7 +186,7 @@ const In40Dashboard = () => {
     if (calculatedSpeed > 40) return "#E0C600";
     if (calculatedSpeed > 20) return "#0FE000";
     if (calculatedSpeed >= 10) return "#55B000";
-    return "transparent"; // Default for speed < 10
+    return "transparent";
   };
 
   const getSpeedPercentage = (calculatedSpeed) => {
@@ -256,7 +194,6 @@ const In40Dashboard = () => {
     return (clampedSpeed / MAX_SPEED) * 100;
   };
 
-  // **New function to calculate range based on SOC**
   const calculateRange = (soc) => {
     const MAX_RANGE_AT_100_SOC = 97; // in km
     if (typeof soc !== "number" || soc < 0) return 0;
@@ -265,29 +202,20 @@ const In40Dashboard = () => {
   };
 
   const diagnosticMessages = getDiagnosticMessages(data.DIAGNOSTICS);
-
-  const greenFilter =
-    "invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)"; // #0FE000
-  const redFilter =
-    "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)"; // #EB3915
-
-  // Calculate speed from RPM for UI display
+  const greenFilter = "invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%)";
+  const redFilter = "invert(32%) sepia(83%) saturate(3025%) hue-rotate(349deg) brightness(96%) contrast(93%)";
   const calculatedSpeed = calculateSpeedFromRpm(data.rpm);
 
   return (
     <>
-      {/* this is anyalytics componnet  */}
       <In40Analytics
         isOpen={isChartOpen}
         onClose={() => setIsChartOpen(false)}
       />
-      {/* this is the  battery analytics components  */}
       <In40BatteryHealth
         isOpen={isBatteryChartOpen}
         onClose={() => setIsBatteryChartOpen(false)}
       />
-
-      {/* this is power chart modal */}
       <In40PowerChartModal
         isOpen={isPowerChartOpen}
         onClose={() => setIsPowerChartOpen(false)}
@@ -296,16 +224,14 @@ const In40Dashboard = () => {
         isOpen={isThermalChartOpen}
         onClose={() => setIsThermalChartOpen(false)}
       />
-
-     <In40Acceleration
-       isOpen={ isAccelerationChartOpen}
-       onClose={() => setIsAccelerationChartOpen(false)}
-     />
-
-     <In40PieChart
-       isOpen={isModeChartOpen}
-       onClose={() => setIsModeChartOpen(false)}
-     />
+      <In40Acceleration
+        isOpen={isAccelerationChartOpen}
+        onClose={() => setIsAccelerationChartOpen(false)}
+      />
+      <In40PieChart
+        isOpen={isModeChartOpen}
+        onClose={() => setIsModeChartOpen(false)}
+      />
       {/* --- Main Dashboard --- */}
       <div className="flex text-white">
         {/* --- Left Side --- */}
@@ -320,14 +246,12 @@ const In40Dashboard = () => {
                 width={35}
                 style={{ filter: data.vehicle_on ? greenFilter : redFilter }}
               />
-
               <div className="flex flex-col items-center">
                 <span className="text-xl">Vehicle</span>
                 <span className="text-xl">
                   {data.vehicle_on ? "ON" : "OFF"}
                 </span>
               </div>
-              
             </div>
             <div className="gap-4 flex rounded-3xl flex-col justify-center items-center w-[140px] h-[140px] bg-secondry">
               <img
@@ -464,7 +388,6 @@ const In40Dashboard = () => {
                 {data.charging ? "Active" : "Inactive"}
               </span>
             </div>
-            {/* this is the range and for now it is static  */}
             <div className="w-[170px] h-[140px] rounded-3xl gap-3 bg-secondry flex flex-col justify-center p-4">
               <span className="text-xl  font-medium text-textcolor">Range</span>
               <span className="text-3xl">
@@ -617,11 +540,11 @@ const In40Dashboard = () => {
           </div>
           <div className="w-full  p-3 h-auto min-h-[165px] bg-primary flex gap-3 rounded-3xl">
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  font-medium  text-textcolor">Voltage</span>
+              <span className="text-xl  font-medium   text-textcolor">Voltage</span>
               <span className="text-3xl">{data.volt?.toFixed(0) ?? "0"} V</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  font-medium  text-textcolor">Current</span>
+              <span className="text-xl  font-medium   text-textcolor">Current</span>
               <span className="text-3xl">{data.amp?.toFixed(0) ?? "0"} A</span>
             </div>
           </div>
@@ -632,3 +555,11 @@ const In40Dashboard = () => {
 };
 
 export default In40Dashboard;
+
+
+
+
+
+
+
+
