@@ -37,7 +37,7 @@ const In40PieChart = ({ isOpen, onClose }) => {
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
                 // ** THE FIX IS HERE: Using axios.post to match the backend route **
-                const response = await axios.post('https://creatara-backend.onrender.com/api/data/in40/analytics/mode-distribution', body);
+                const response = await axios.post('https://dashboard-backend-h8qz.onrender.com/api/data/in40/analytics/mode-distribution', body);
                 const formattedData = response.data.map(item => ({
                     name: V_MODE_MAP[item.vmode] || `Mode ${item.vmode}`,
                     value: item.count,
