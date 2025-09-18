@@ -10,7 +10,7 @@ const Ve4ThermalAnalytics = ({ isOpen, onClose }) => {
         let intervalId = null;
         const fetchData = async () => {
             try {
-                const response = await axios.get('https://creatara-backend.onrender.com/api/data/ve4/analytics/thermal');
+                const response = await axios.get('https://dashboard-backend-h8qz.onrender.com/api/data/ve4/analytics/thermal');
                 const formattedData = response.data.map(item => ({
                     power: item.volt * item.amp,
                     btemp: item.btemp,
