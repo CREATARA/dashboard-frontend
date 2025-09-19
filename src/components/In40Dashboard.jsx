@@ -2,13 +2,12 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import mqtt from "mqtt";
-import axios from "axios";
-import In40Analytics from "./In40Analytics";
-import In40BatteryHealth from "./In40BatteryHealth";
-import In40PowerChartModal from "./In40PowerChartModal";
-import In40ThermalModal from "./In40ThermalModal";
-import In40Acceleration from "./In40Accelaration";
-import In40PieChart from "./In40PieChart";
+import In40Analytics from "../components/In40Analytics";
+import In40BatteryHealth from "../components/In40BatteryHealth";
+import In40PowerChartModal from "../components/In40PowerChartModal";
+import In40ThermalModal from "../components/In40ThermalModal";
+import In40Acceleration from "../components/In40Acceleration"
+import In40PieChart from "../components/In40PieChart";
 // --- Data Mappings and Dummy Data ---
 
 const DUMMY_DATA = {
