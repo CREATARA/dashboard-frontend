@@ -50,7 +50,7 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                     startDate: formatDateForSQL(startDate) + ' 00:00:00',
                     endDate: formatDateForSQL(endDate) + ' 00:00:00',
                 } : {};
-                const response = await axios.post('(https://dashboard-backend-h8qz.onrender.com/api/data/in40/analytics/power)', body);
+                const response = await axios.post('https://dashboard-backend-h8qz.onrender.com/api/data/in40/analytics/power', body);
                 const formattedData = response.data.map(item => ({
                     ...item,
                     power: item.volt * item.amp,
