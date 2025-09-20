@@ -375,7 +375,7 @@ const In40Dashboard = () => {
               <span className="text-3xl">{getVModeName(data.vmode)}</span>
             </div>
             <div className="w-[220px] h-[140px] rounded-3xl gap-2 bg-secondry flex flex-col justify-center p-4">
-              <span className="text-xl  font-medium text-textcolor">Odometer</span>
+              <span className="text-xl  font-medium text-textcolor">Tripmeter</span>
               <span className="text-3xl">
                 {data.odometer?.toFixed(2) ?? "0.00"} km
               </span>
