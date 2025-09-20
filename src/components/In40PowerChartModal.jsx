@@ -158,7 +158,7 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                                 <YAxis 
                                     label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} 
                                     stroke="#facc15" 
-                                    domain={[1500]} 
+                                    domain={[1500, 'auto']} 
                                 />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
