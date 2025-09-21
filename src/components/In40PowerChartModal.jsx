@@ -156,10 +156,12 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                                 <XAxis dataKey="timeLabel" stroke="#A0AEC0" isAnimationActive={false} />
                                 {/* ** THE FIX IS HERE: The 'domain' prop sets the axis range ** */}
                                 <YAxis 
-                                    dataKey="power"
-                                    label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} 
+                                      label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} 
                                     stroke="#facc15" 
-                                    domain={[1000, 5000]} 
+                                    domain={[500, 3000]} // Custom axis from 500 to 3000
+                                    ticks={[500, 1000, 1500, 2000, 2500, 3000]} // Custom ticks for clarity
+                                    tick={{ fill: '#A0AEC0' }}
+                                    allowDataOverflow={true}
                                 />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
