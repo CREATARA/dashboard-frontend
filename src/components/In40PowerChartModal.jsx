@@ -158,8 +158,8 @@ const In40PowerChartModal = ({ isOpen, onClose }) => {
                                 <YAxis 
                                       label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} 
                                     stroke="#facc15" 
-                                    domain={[500, 3000]} // Custom axis from 500 to 3000
-                                    ticks={[500, 1000, 1500, 2000, 2500, 3000]} // Custom ticks for clarity
+                                    domain={[100, 3000]} // Custom axis from 500 to 3000
+                                    ticks={[3000,2500, 2000, 1500, 1000, 500, 100]} // Custom ticks for clarity
                                     tick={{ fill: '#A0AEC0' }}
                                     allowDataOverflow={true}
                                 />
