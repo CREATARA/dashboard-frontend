@@ -162,7 +162,12 @@ const In40ThermalModal = ({ isOpen, onClose }) => {
                             <ComposedChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
                                 <XAxis dataKey="timeLabel" stroke="#A0AEC0" isAnimationActive={false} />
-                                <YAxis yAxisId="left" label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} stroke="#facc15" />
+                                <YAxis label={{ value: 'Power (Watts)', angle: -90, position: 'insideLeft', fill: '#A0AEC0' }} 
+                                    stroke="#facc15" 
+                                    domain={[1500, 5000]} // Custom axis from 500 to 3000
+                                    ticks={[5000,4500,4000, 3500, 3000, 2500, 2000, 1500]} // Custom ticks for clarity
+                                    tick={{ fill: '#A0AEC0' }}
+                                    allowDataOverflow={true} />
                                 <YAxis yAxisId="right" orientation="right" label={{ value: 'Temp (°C)', angle: -90, position: 'insideRight', fill: '#A0AEC0' }} stroke="#f87171" />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
